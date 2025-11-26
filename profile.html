@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Profil</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="index.html">Ana Sayfa</a>
+        <a href="catalog.html">Katalog</a>
+        <a href="listings.html">İlanlar</a>
+        <a href="profile.html" class="active">Profil</a>
+    </div>
+</nav>
+
+<h1>Profil</h1>
+
+<!-- PROFİL BİLGİLERİ -->
+<div class="item">
+    <h2>Kullanıcı Bilgileri</h2>
+    <p><b>Kullanıcı Adı:</b> mehmet_demir</p>
+    <p><b>Ad Soyad:</b> Mehmet Demir</p>
+    <p><b>Satıcı Puanı:</b> ⭐ 4.9</p>
+    <p><b>Müşteri Puanı:</b> ⭐ 4.8</p>
+    <a class="btn" href="edit-profile.html">Profili Düzenle</a>
+</div>
+
+<!-- ADRESLER -->
+<div class="item">
+    <h2>Adreslerim</h2>
+    <p><b>Evim</b> — Ankara / Çankaya<br>Atatürk Blv. No:23</p>
+    <a class="btn" href="edit-address.html">Adresleri Yönet</a>
+</div>
+
+<!-- AKTİF İLANLAR -->
+<div class="item">
+    <h2>Aktif İlanlarım</h2>
+
+    <div class="list-row">
+        <img src="img/book1.jpg" alt="">
+        <div>
+            <b>Kürk Mantolu Madonna</b><br>
+            45₺ — Satılık — Az Yıpranmış<br>
+            <a class="btn" href="manage-listing.html?listing=1">İlanı Yönet</a>
+        </div>
+    </div>
+
+    <div class="list-row">
+        <img src="img/book1.jpg" alt="">
+        <div>
+            <b>Kürk Mantolu Madonna</b><br>
+            12₺ / ay — Kiralık — Orta<br>
+            <a class="btn" href="manage-listing.html?listing=2">İlanı Yönet</a>
+        </div>
+    </div>
+</div>
+
+<!-- BANA GELEN TEKLİFLER -->
+<div class="item">
+    <h2>Bana Gelen Teklifler</h2>
+
+    <div class="offer-box">
+        <b>Kitap:</b> Kürk Mantolu Madonna<br>
+        <b>Teklif Veren:</b> ahmet_yilmaz<br>
+        <b>Teklif:</b> 40₺ — Satın Alma<br>
+        <b>Tarih:</b> 12.01.2025<br><br>
+        <a class="btn" href="offer-detail.html?offer=1">Teklifi Gör</a>
+    </div>
+
+    <div class="offer-box">
+        <b>Kitap:</b> Kürk Mantolu Madonna<br>
+        <b>Teklif Veren:</b> ayse_celik<br>
+        <b>Teklif:</b> 10₺ / ay — Kiralama (30 gün)<br>
+        <b>Tarih:</b> 15.01.2025<br><br>
+        <a class="btn" href="offer-detail.html?offer=2">Teklifi Gör</a>
+    </div>
+</div>
+
+<!-- VERDİĞİM TEKLİFLER -->
+<div class="item">
+    <h2>Verdiğim Teklifler</h2>
+
+    <div class="offer-box">
+        <b>Zamanın Kısa Tarihi</b><br>
+        Verilen teklif: <b>65₺</b><br>
+        Durum: Beklemede
+    </div>
+
+    <div class="offer-box">
+        <b>21. Yüzyıl İçin 21 Ders</b><br>
+        Verilen teklif: <b>45₺</b><br>
+        Durum: Reddedildi
+    </div>
+</div>
+
+<!-- GEÇMİŞ İŞLEMLER -->
+<div class="item">
+    <h2>Geçmiş İşlemlerim</h2>
+
+    <div class="history-section">
+        <h3>Satın Alımlar</h3>
+
+        <!-- İşlem 1 -->
+        <p><b>Kürk Mantolu Madonna</b> — 42₺ — Teslim Edildi</p>
+
+        <!-- Yorum kutusu -->
+        <div id="yorumKutusu1" style="display:none; margin-top:10px;">
+            <textarea class="manage-input" id="yorumMetni1" placeholder="Yorum yaz..."></textarea>
+            <a class="btn" style="margin-top:10px;" onclick="yorumGonder(1)">Gönder</a>
+        </div>
+
+        <!-- Yorumun gösterileceği yer -->
+        <p id="yorumGoster1" style="margin-top:8px;"></p>
+
+        <!-- Değerlendir butonu -->
+        <a href="#" id="degerlendir1"
+           onclick="document.getElementById('yorumKutusu1').style.display='block'; this.style.display='none'; return false;">
+            Değerlendir
+        </a>
+    </div>
+
+    <div class="history-section">
+        <h3>Kiralama</h3>
+
+        <!-- İşlem 2 -->
+        <p><b>Benim Adım Kırmızı</b> — 10₺ / ay — Süre Bitti</p>
+
+        <div id="yorumKutusu2" style="display:none; margin-top:10px;">
+            <textarea class="manage-input" id="yorumMetni2" placeholder="Yorum yaz..."></textarea>
+            <a class="btn" style="margin-top:10px;" onclick="yorumGonder(2)">Gönder</a>
+        </div>
+
+        <p id="yorumGoster2" style="margin-top:8px;"></p>
+
+        <a href="#" id="degerlendir2"
+           onclick="document.getElementById('yorumKutusu2').style.display='block'; this.style.display='none'; return false;">
+            Değerlendir
+        </a>
+    </div>
+</div>
+
+<!-- YORUMLAR -->
+<div class="item">
+    <h2>Hakkımdaki Yorumlar</h2>
+
+    <div class="offer-box">
+        <b>ayse_celik:</b><br>
+        Kitap tertemizdi, çok ilgili satıcı.<br>
+        ⭐⭐⭐⭐⭐
+    </div>
+
+    <div class="offer-box">
+        <b>ahmet_yilmaz:</b><br>
+        Kargo biraz geç geldi ama kitap iyi.<br>
+        ⭐⭐⭐⭐☆
+    </div>
+</div>
+
+<script>
+    function yorumGonder(id) {
+        const metinInput = document.getElementById('yorumMetni' + id);
+        const goster = document.getElementById('yorumGoster' + id);
+        const kutu = document.getElementById('yorumKutusu' + id);
+
+        const metin = metinInput.value.trim();
+        if (!metin) return;
+
+        goster.textContent = 'Yorumun: ' + metin;
+        kutu.style.display = 'none';
+    }
+</script>
+
+</body>
+</html>

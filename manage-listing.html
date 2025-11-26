@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>İlanı Yönet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="index.html">Ana Sayfa</a>
+        <a href="catalog.html">Katalog</a>
+        <a href="listings.html">İlanlar</a>
+        <a href="profile.html">Profil</a>
+    </div>
+</nav>
+
+<h1>İlanı Yönet</h1>
+
+<!-- ILAN TEMEL BİLGİLER -->
+<div class="manage-box">
+    <div class="manage-section-title">İlan Bilgileri</div>
+    <p><b>Kitap:</b> Kürk Mantolu Madonna</p>
+    <p><b>Durum:</b> Az Yıpranmış</p>
+    <p><b>Tip:</b> Satılık</p>
+    <p><b>Fiyat:</b> 45₺</p>
+</div>
+
+<!-- ILANI DÜZENLE -->
+<div class="manage-box">
+    <div class="manage-section-title">İlanı Düzenle</div>
+
+    <label>Açıklama</label>
+    <textarea class="manage-input">Temiz kullanıldı, sayfalar sağlam.</textarea>
+
+    <label>Fiyat</label>
+    <input type="number" class="manage-input" value="45">
+
+    <label>Kondisyon</label>
+    <select class="manage-input">
+        <option>Yeni</option>
+        <option selected>Az Yıpranmış</option>
+        <option>Orta</option>
+        <option>Yıpranmış</option>
+    </select>
+
+    <br>
+    <a class="btn" href="#">Kaydet</a>
+</div>
+
+<!-- ILAN AYARLARI -->
+<div class="manage-box">
+    <div class="manage-section-title">Diğer Ayarlar</div>
+    <a class="btn btn-gray" href="#">İlanı Yayından Kaldır</a>
+    <a class="btn btn-red" href="#">İlanı Sil</a>
+</div>
+
+<!-- TEKLİFLER LİSTESİ -->
+<div class="manage-box">
+    <div class="manage-section-title">Bu İlan İçin Gelen Teklifler</div>
+
+    <!-- Teklif 1 -->
+    <div class="offer-box">
+        <p><b>ahmet_yilmaz</b> — 40₺ teklif verdi</p>
+        <p>Tür: Satın Alma</p>
+        <p>Tarih: 12.01.2025</p>
+        <a class="btn" href="offer-detail.html?offer=1">Teklifi Gör</a>
+    </div>
+
+    <!-- Teklif 2 -->
+    <div class="offer-box">
+        <p><b>ayse_celik</b> — 10₺ / ay</p>
+        <p>Tür: Kiralama (30 gün)</p>
+        <p>Tarih: 15.01.2025</p>
+        <a class="btn" href="offer-detail.html?offer=2">Teklifi Gör</a>
+    </div>
+
+</div>
+
+</body>
+</html>

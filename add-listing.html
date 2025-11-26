@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Yeni İlan Ekle</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="index.html">Ana Sayfa</a>
+        <a href="catalog.html">Katalog</a>
+        <a href="listings.html">İlanlar</a>
+        <a href="profile.html">Profil</a>
+    </div>
+</nav>
+
+<h1>Yeni İlan Ekle</h1>
+
+<div class="item" style="max-width:500px; margin:auto;">
+
+    <label>Kitap</label>
+    <select>
+        <option>İnce Memed</option>
+        <option>Kürk Mantolu Madonna</option>
+        <option>Zamanın Kısa Tarihi</option>
+        <option>— Yeni Kitap Tanımı Ekle —</option>
+    </select>
+
+    <label>İlan Tipi</label>
+    <select>
+        <option>Satılık</option>
+        <option>Kiralık</option>
+    </select>
+
+    <label>Fiyat</label>
+    <input type="number" placeholder="₺">
+
+    <label>Kondisyon</label>
+    <select>
+        <option>Yeni</option>
+        <option>Az Yıpranmış</option>
+        <option>Orta</option>
+        <option>Yıpranmış</option>
+    </select>
+
+    <label>Açıklama</label>
+    <textarea style="height:120px;"></textarea>
+
+    <label>Kitap Fotoğrafı</label>
+    <input type="file">
+
+    <button class="btn" style="margin-top:15px; width:100%;">Kaydet</button>
+</div>
+
+</body>
+</html>
