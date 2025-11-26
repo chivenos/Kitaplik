@@ -19,7 +19,7 @@
     </div>
 </nav>
 
-<h1>Profil</h1>
+<h1>Profilim</h1>
 
 <!-- PROFİL BİLGİLERİ -->
 <div class="item">
@@ -34,16 +34,20 @@
 <!-- ADRESLER -->
 <div class="item">
     <h2>Adreslerim</h2>
-    <p><b>Evim</b> — Ankara / Çankaya<br>Atatürk Blv. No:23</p>
+    <p>
+        <b>Evim</b><br>
+        Ankara / Çankaya <br>
+        Atatürk Blv. No:23
+    </p>
     <a class="btn" href="edit-address.html">Adresleri Yönet</a>
 </div>
 
-<!-- AKTİF İLANLAR -->
+<!-- İLANLARIM -->
 <div class="item">
     <h2>Aktif İlanlarım</h2>
 
     <div class="list-row">
-        <img src="img/book1.jpg" alt="">
+        <img src="img/book1.jpg">
         <div>
             <b>Kürk Mantolu Madonna</b><br>
             45₺ — Satılık — Az Yıpranmış<br>
@@ -52,7 +56,7 @@
     </div>
 
     <div class="list-row">
-        <img src="img/book1.jpg" alt="">
+        <img src="img/book1.jpg">
         <div>
             <b>Kürk Mantolu Madonna</b><br>
             12₺ / ay — Kiralık — Orta<br>
@@ -67,7 +71,8 @@
 
     <div class="offer-box">
         <b>Kitap:</b> Kürk Mantolu Madonna<br>
-        <b>Teklif Veren:</b> ahmet_yilmaz<br>
+        <b>Teklif Veren:</b>
+        <a href="public-profile.html?user=ahmet" style="color:#1a0dab;">ahmet_yilmaz</a><br>
         <b>Teklif:</b> 40₺ — Satın Alma<br>
         <b>Tarih:</b> 12.01.2025<br><br>
         <a class="btn" href="offer-detail.html?offer=1">Teklifi Gör</a>
@@ -75,7 +80,8 @@
 
     <div class="offer-box">
         <b>Kitap:</b> Kürk Mantolu Madonna<br>
-        <b>Teklif Veren:</b> ayse_celik<br>
+        <b>Teklif Veren:</b>
+        <a href="public-profile.html?user=ayse" style="color:#1a0dab;">ayse_celik</a><br>
         <b>Teklif:</b> 10₺ / ay — Kiralama (30 gün)<br>
         <b>Tarih:</b> 15.01.2025<br><br>
         <a class="btn" href="offer-detail.html?offer=2">Teklifi Gör</a>
@@ -115,10 +121,10 @@
             <a class="btn" style="margin-top:10px;" onclick="yorumGonder(1)">Gönder</a>
         </div>
 
-        <!-- Yorumun gösterileceği yer -->
+        <!-- Gösterilen yorum -->
         <p id="yorumGoster1" style="margin-top:8px;"></p>
 
-        <!-- Değerlendir butonu -->
+        <!-- Değerlendir -->
         <a href="#" id="degerlendir1"
            onclick="document.getElementById('yorumKutusu1').style.display='block'; this.style.display='none'; return false;">
             Değerlendir
@@ -128,7 +134,6 @@
     <div class="history-section">
         <h3>Kiralama</h3>
 
-        <!-- İşlem 2 -->
         <p><b>Benim Adım Kırmızı</b> — 10₺ / ay — Süre Bitti</p>
 
         <div id="yorumKutusu2" style="display:none; margin-top:10px;">
@@ -136,7 +141,7 @@
             <a class="btn" style="margin-top:10px;" onclick="yorumGonder(2)">Gönder</a>
         </div>
 
-        <p id="yorumGoster2" style="margin-top:8px;"></p>
+        <p id="yorumGoster2"></p>
 
         <a href="#" id="degerlendir2"
            onclick="document.getElementById('yorumKutusu2').style.display='block'; this.style.display='none'; return false;">
@@ -145,7 +150,7 @@
     </div>
 </div>
 
-<!-- YORUMLAR -->
+<!-- HAKKIMDAKİ YORUMLAR -->
 <div class="item">
     <h2>Hakkımdaki Yorumlar</h2>
 
@@ -164,15 +169,14 @@
 
 <script>
     function yorumGonder(id) {
-        const metinInput = document.getElementById('yorumMetni' + id);
-        const goster = document.getElementById('yorumGoster' + id);
-        const kutu = document.getElementById('yorumKutusu' + id);
+        const input = document.getElementById("yorumMetni" + id);
+        const yazi = document.getElementById("yorumGoster" + id);
+        const kutu = document.getElementById("yorumKutusu" + id);
 
-        const metin = metinInput.value.trim();
-        if (!metin) return;
+        if (!input.value.trim()) return;
 
-        goster.textContent = 'Yorumun: ' + metin;
-        kutu.style.display = 'none';
+        yazi.textContent = "Yorumun: " + input.value.trim();
+        kutu.style.display = "none";
     }
 </script>
 

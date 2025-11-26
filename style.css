@@ -280,3 +280,6 @@ h1, h2 {
 .list-row div {
     padding-top: 5px;
 }
+.list-row {
+    margin-bottom: 25px !important;
+}

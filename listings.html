@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <title>İlanlar</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <nav>
@@ -12,114 +14,114 @@
     <div>
         <a href="index.html">Ana Sayfa</a>
         <a href="catalog.html">Katalog</a>
-        <a href="listings.html">İlanlar</a>
-        <a href="login.html">Giriş Yap</a>
+        <a href="listings.html" class="active">İlanlar</a>
         <a href="profile.html">Profil</a>
     </div>
 </nav>
 
-<h1>Tüm İlanlar</h1>
+<h1>İlanlar</h1>
 
-<div style="display:flex; gap:30px;">
+<div style="display:flex; gap:20px;">
 
-    <!-- Sol Filtre -->
+    <!-- FİLTRELER -->
     <div class="filter-box">
-        <h2>Filtreler</h2>
+        <h2>Filtrele</h2>
 
         <div class="filter-group">
             <label>Kitap Adı</label>
-            <input type="text" placeholder="Kitap ara...">
-        </div>
-
-        <div class="filter-group">
-            <label>Satıcı</label>
-            <input type="text" placeholder="Satıcı kullanıcı adı...">
-        </div>
-
-        <div class="filter-group">
-         <label>Kategori</label>
-        <select>
-            <option>Tümü</option>
-            <option>Roman</option>
-            <option>Bilim</option>
-            <option>Tarih</option>
-            <option>Edebiyat</option>
-            <option>Psikoloji</option>
-         </select>
+            <input type="text" placeholder="Örn: Kürk Mantolu Madonna">
         </div>
 
         <div class="filter-group">
             <label>Yazar</label>
-            <input type="text" placeholder="Yazar ara...">
+            <input type="text" placeholder="Örn: Sabahattin Ali">
         </div>
 
         <div class="filter-group">
             <label>Yayınevi</label>
-            <input type="text" placeholder="Yayınevi ara...">
+            <input type="text" placeholder="Örn: YKY">
         </div>
 
         <div class="filter-group">
-            <label>Durum</label>
+            <label>Tip</label>
             <select>
-                <option>Tümü</option>
-                <option>Yeni</option>
-                <option>Az Yıpranmış</option>
-                <option>Orta</option>
-                <option>Yıpranmış</option>
+                <option value="">Hepsi</option>
+                <option value="satilik">Satılık</option>
+                <option value="kiralik">Kiralık</option>
             </select>
         </div>
 
-        <div class="filter-group">
-            <label>İlan Durumu</label>
-            <select>
-                <option>Tümü</option>
-                <option>Yayında</option>
-                <option>Beklemede</option>
-                <option>Satıldı</option>
-                <option>Kiralandı</option>
-            </select>
-        </div>
+        <div class="filter-group price-row">
+            <div style="flex:1;">
+                <label>Min Fiyat</label>
+                <input type="number" placeholder="0">
+            </div>
 
-        <div class="filter-group">
-            <label>İlan Tipi</label>
-            <select>
-                <option>Tümü</option>
-                <option>Satış</option>
-                <option>Kiralama</option>
-            </select>
-        </div>
-
-        <div class="filter-group">
-            <label>Fiyat Aralığı</label>
-            <div class="price-row">
-                <input type="number" placeholder="Min">
-                <input type="number" placeholder="Max">
+            <div style="flex:1;">
+                <label>Max Fiyat</label>
+                <input type="number" placeholder="200">
             </div>
         </div>
+
+        <a class="btn" style="width:100%; text-align:center; margin-top:10px;">Uygula</a>
     </div>
 
-    <!-- Sağ İlanlar -->
-    <div style="width:100%;">
+    <!-- TÜM İLANLAR -->
+    <div style="flex:1;">
 
+        <!-- İLAN 1 -->
         <div class="item list-row">
             <img src="img/book1.jpg">
             <div>
-                <b>Kürk Mantolu Madonna</b><br>
-                Satıcı: ahmet_yilmaz<br>
-                Durum: Az Yıpranmış<br>
-                Fiyat: 45₺<br>
-                <a href="offer.html?listing=1">Teklif Ver</a>
+                <a href="book.html?book=1" class="book-link" style="font-weight:bold; color:#1a0dab;">
+                    Kürk Mantolu Madonna
+                </a><br>
+
+                Satıcı:
+                <a href="public-profile.html?user=mehmet" style="color:#1a0dab;">
+                    mehmet_demir
+                </a><span style="color:#f4b400;">⭐ 4.9</span><br>
+
+                45₺ — Satılık — Az Yıpranmış<br>
+                <a class="btn" href="offer.html?listing=1">Teklif Ver</a>
             </div>
         </div>
 
+        <!-- İLAN 2 -->
+        <div class="item list-row">
+            <img src="img/book1.jpg">
+            <div>
+                <a href="book.html?book=1" class="book-link" style="font-weight:bold; color:#1a0dab;">
+                    Kürk Mantolu Madonna
+                </a><br>
+
+                Satıcı:
+                <a href="public-profile.html?user=ayse" style="color:#1a0dab;">
+                    ayse_celik
+                </a><span style="color:#f4b400;">⭐ 4.2</span><br>
+
+                12₺ / ay — Kiralık — Orta<br>
+
+                <a class="btn" href="offer.html?listing=2">Teklif Ver</a>
+            </div>
+        </div>
+
+        <!-- İLAN 3 -->
         <div class="item list-row">
             <img src="img/book2.jpg">
             <div>
-                <b>Zamanın Kısa Tarihi</b><br>
-                Satıcı: mehmet_demir<br>
-                Durum: Yeni<br>
-                Fiyat: 65₺<br>
-                <a href="offer.html?listing=2">Teklif Ver</a>
+                <a href="book.html?book=2" class="book-link" style="font-weight:bold; color:#1a0dab;">
+                    İnce Memed
+                </a><br>
+
+                Satıcı:
+                <a href="public-profile.html?user=emir" style="color:#1a0dab;">
+                    emir_kaan
+                </a><span style="color:#f4b400;">⭐ 0.2</span><br>
+
+                3₺ — Satılık — İyi<br>
+
+                <a class="btn" href="offer.html?listing=3">Teklif Ver</a>
             </div>
         </div>
 

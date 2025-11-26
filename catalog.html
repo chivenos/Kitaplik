@@ -1,84 +1,87 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <title>Katalog</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
 <nav>
     <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
     <div>
         <a href="index.html">Ana Sayfa</a>
-        <a href="catalog.html">Katalog</a>
+        <a href="catalog.html" class="active">Katalog</a>
         <a href="listings.html">İlanlar</a>
-        <a href="login.html">Giriş Yap</a>
         <a href="profile.html">Profil</a>
     </div>
 </nav>
 
 <h1>Katalog</h1>
 
-<div style="display:flex; gap:30px;">
+<div style="display:flex; gap:20px;">
 
-    <!-- Sol Filtre Paneli -->
+    <!-- FİLTRELER -->
     <div class="filter-box">
-        <h2>Filtreler</h2>
+        <h2>Filtrele</h2>
 
         <div class="filter-group">
             <label>Kitap Adı</label>
-            <input type="text" placeholder="Kitap ara...">
-        </div>
-
-        <div class="filter-group">
-         <label>Kategori</label>
-        <select>
-            <option>Tümü</option>
-            <option>Roman</option>
-            <option>Bilim</option>
-            <option>Tarih</option>
-            <option>Edebiyat</option>
-            <option>Psikoloji</option>
-         </select>
+            <input type="text" placeholder="Örn: İnce Memed">
         </div>
 
         <div class="filter-group">
             <label>Yazar</label>
-            <input type="text" placeholder="Yazar ara...">
+            <input type="text" placeholder="Örn: Yaşar Kemal">
         </div>
 
         <div class="filter-group">
             <label>Yayınevi</label>
-            <input type="text" placeholder="Yayınevi ara...">
+            <input type="text" placeholder="Örn: Yapı Kredi Yay.">
         </div>
+
+        <a class="btn" style="width:100%; text-align:center; margin-top:10px;">Uygula</a>
     </div>
 
-    <!-- Sağ Katalog -->
-    <div style="width:100%;">
+    <!-- KATALOG LİSTESİ -->
+    <div style="flex:1;">
 
-        <div class="item">
-            <b>Kürk Mantolu Madonna</b><br>
-            Sabahattin Ali<br>
-            ISBN: 97800000<br>
+        <!-- KİTAP 1 -->
+        <div class="item list-row">
+            <img src="img/book1.jpg">
+            <div>
+                <a href="book.html?book=1" class="book-link"
+                   style="font-weight:bold; color:#1a0dab;">
+                    Kürk Mantolu Madonna
+                </a><br>
 
-            <span class="tag sale">Satılık: 12 adet</span>
-            <span class="tag rent">Kiralık: 4 adet</span>
+                Yazar: Sabahattin Ali<br>
+                Yayınevi: YKY<br>
+                Puan: ⭐ 4.8<br>
+                <b>3 adet ilan var</b><br><br>
 
-            <br><br>
-            <a href="book.html">İncele</a>
+                <a class="btn" href="book.html?book=1">İlanları Gör</a>
+            </div>
         </div>
 
-       <div class="item">
-            <b>Kuranı Kerim</b><br>
-            Sabahattin Ali<br>
-            ISBN: 92800000<br>
+        <!-- KİTAP 2 -->
+        <div class="item list-row">
+            <img src="img/book2.jpg">
+            <div>
+                <a href="book.html?book=2" class="book-link"
+                   style="font-weight:bold; color:#1a0dab;">
+                    İnce Memed
+                </a><br>
 
-            <span class="tag sale">Satılık: 5 adet</span>
-            <span class="tag rent">Kiralık: 7 adet</span>
+                Yazar: Yaşar Kemal<br>
+                Yayınevi: Yapı Kredi Yay.<br>
+                Puan: ⭐ 4.7<br>
+                <b>1 adet ilan var</b><br><br>
 
-            <br><br>
-            <a href="book.html">İncele</a>
+                <a class="btn" href="book.html?book=2">İlanları Gör</a>
+            </div>
         </div>
 
     </div>
