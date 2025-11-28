@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div id="nav-links">
+        </div>
+</nav>
+
+<h1>Profil</h1>
+
+<div class="item">
+    <h2>Kullanıcı Bilgileri</h2>
+    <p><b>Kullanıcı Adı:</b> <span id="profile-username">...</span></p>
+    <p><b>Ad Soyad:</b> <span id="profile-name">...</span></p>
+    <p><b>Satıcı Puanı:</b> ⭐ <span id="seller-rating">-</span></p>
+    <p><b>Müşteri Puanı:</b> ⭐ <span id="customer-rating">-</span></p>
+    
+    <div style="margin-top:10px;">
+        <a class="btn" href="my-orders.html">Siparişlerim ve İşlemlerim</a>
+        <a class="btn" href="notifications.html" style="background:#555;">Bildirimler</a>
+    </div>
+</div>
+
+<div class="item">
+    <h2>Adreslerim</h2>
+    <div id="address-container">Adresler yükleniyor...</div>
+    <br>
+    <a class="btn" href="edit-address.html">Yeni Adres Ekle</a>
+</div>
+
+<div class="item">
+    <h2>Aktif İlanlarım</h2>
+    <div id="my-listings">
+        <p>Henüz ilanınız yok.</p>
+    </div>
+    <br>
+    <a href="add-listing.html" class="btn">Yeni İlan Ekle</a>
+</div>
+
+<div class="item">
+    <h2>Bana Gelen Teklifler</h2>
+    <div id="incoming-offers">
+        <p>Bekleyen teklif yok.</p>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

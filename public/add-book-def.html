@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Kitap Tanımla</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div id="nav-links"></div>
+</nav>
+
+<h1>Katalogda Olmayan Kitap Ekle</h1>
+
+<div class="item" style="max-width:500px; margin:auto;">
+    <label>ISBN</label>
+    <input type="text" id="newIsbn" maxlength="13">
+
+    <label>Kitap Adı</label>
+    <input type="text" id="newTitle">
+
+    <label>Yazar</label>
+    <input type="text" id="newAuthor">
+
+    <label>Yayınevi</label>
+    <input type="text" id="newPublisher">
+
+    <label>Kategori</label>
+    <select id="newCategory">
+        <option>Roman</option>
+        <option>Bilim</option>
+        <option>Tarih</option>
+        <option>Ders Kitabı</option>
+    </select>
+
+    <button id="saveBookDefBtn" class="btn" style="margin-top:15px; width:100%;">Kaydet</button>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>

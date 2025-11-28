@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Bildirimler</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .notif-item { padding: 15px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
+        .notif-item:hover { background-color: #f9f9f9; }
+        .notif-unread { background-color: #e8f4ff; border-left: 4px solid #007bff; }
+        .notif-date { font-size: 0.8em; color: #888; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="profile.html">Profilime Dön</a>
+    </div>
+</nav>
+
+<h1>Bildirimler</h1>
+
+<div class="item" style="padding:0;">
+    
+    <div class="notif-item notif-unread">
+        <div>
+            <b>Yeni Teklif!</b> "Kürk Mantolu Madonna" ilanınız için ahmet_yilmaz bir teklif gönderdi.
+            <br><span class="notif-date">10 dakika önce</span>
+        </div>
+        <a href="manage-listing.html?id=1" class="btn" style="font-size:0.8em;">Görüntüle</a>
+    </div>
+
+    <div class="notif-item notif-unread">
+        <div>
+            <b>İşlem Onayı:</b> Siparişiniz satıcı tarafından kargoya verildi. Takip No: 123456
+            <br><span class="notif-date">2 saat önce</span>
+        </div>
+        <a href="my-orders.html" class="btn" style="font-size:0.8em;">Takip Et</a>
+    </div>
+
+    <div class="notif-item">
+        <div>
+            <b>İade Hatırlatması:</b> Kiraladığınız kitabın iade süresine 3 gün kaldı.
+            <br><span class="notif-date">1 gün önce</span>
+        </div>
+        <a href="my-orders.html" class="btn btn-gray" style="font-size:0.8em;">Detay</a>
+    </div>
+
+    <div class="notif-item">
+        <div>
+            <b>Hoşgeldiniz:</b> Aramıza katıldığınız için teşekkürler! Profilinizi tamamlayın.
+            <br><span class="notif-date">5 gün önce</span>
+        </div>
+    </div>
+
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

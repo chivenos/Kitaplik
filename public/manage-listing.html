@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>İlanı Yönet</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="index.html">Ana Sayfa</a>
+        <a href="catalog.html">Katalog</a>
+        <a href="listings.html">İlanlar</a>
+        <a href="profile.html">Profil</a>
+    </div>
+</nav>
+
+<h1>İlanı Yönet</h1>
+
+<!-- ILAN TEMEL BİLGİLER -->
+<div class="manage-box">
+    <div class="manage-section-title">İlan Bilgileri</div>
+    <p><b>Kitap:</b> <span id="listing-title">Yükleniyor...</span></p>
+    <p><b>Durum:</b> <span id="listing-condition">-</span></p>
+    <p><b>Satıcı:</b> <span id="listing-seller">-</span></p>
+    <p><b>Fiyat:</b> <span id="listing-price">-</span></p>
+</div>
+
+<!-- ILANI DÜZENLE -->
+<div class="manage-box">
+    <div class="manage-section-title">İlanı Düzenle</div>
+
+    <label>Açıklama</label>
+    <textarea id="manage-desc" class="manage-input"></textarea>
+
+    <label>Fiyat</label>
+    <input type="number" id="manage-price" class="manage-input" value="">
+
+    <label>Kondisyon</label>
+    <select id="manage-condition" class="manage-input">
+        <option>Yeni</option>
+        <option>Az Yıpranmış</option>
+        <option>Orta</option>
+        <option>Yıpranmış</option>
+    </select>
+
+    <br>
+    <button id="saveListingBtn" class="btn">Kaydet</button>
+</div>
+
+<!-- ILAN AYARLARI -->
+<div class="manage-box">
+    <div class="manage-section-title">Diğer Ayarlar</div>
+    <button id="toggleStatusBtn" class="btn btn-gray">Yayından Kaldır / Yayına Al</button>
+    <button id="deleteListingBtn" class="btn btn-red">İlanı Sil</button>
+</div>
+
+<!-- TEKLİFLER LİSTESİ -->
+<div class="manage-box">
+    <div class="manage-section-title">Bu İlan İçin Gelen Teklifler</div>
+    <div id="manage-offers">
+        <p>Teklifler yükleniyor...</p>
+    </div>
+
+</div>
+<script src="js/app.js"></script>
+</body>
+</html>

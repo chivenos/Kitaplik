@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Teklif Ver</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<nav>
+    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div id="nav-links"></div>
+</nav>
+
+<h1>Teklif Ver</h1>
+
+<div class="offer-container">
+    <div class="offer-summary">
+        <h3>Teklif Verdiğiniz İlan</h3>
+        <p><b>Kitap:</b> <span id="summary-book">Yükleniyor...</span></p>
+        <p><b>Satıcı:</b> <span id="summary-seller">...</span></p>
+        <p><b>Durum:</b> <span id="summary-condition">...</span></p>
+        <p><b>Liste Fiyatı:</b> <span id="summary-price">...</span> ₺</p>
+    </div>
+
+    <div class="offer-summary">
+        <form class="offer-form">
+            <label>Teklif Türü</label>
+            <select id="offerType">
+                <option value="Satın Alma">Satın Alma</option>
+                <option value="Kiralama">Kiralama</option>
+                <option value="Ödünç">Ödünç Alma</option>
+            </select>
+
+            <label>Teklif Ettiğiniz Fiyat (₺)</label>
+            <input type="number" id="offerPrice" placeholder="Örn: 40">
+
+            <label>Ödeme Yöntemi</label>
+            <select id="paymentType">
+                <option value="Nakit">Nakit (Elden)</option>
+                <option value="Havale">Havale / EFT</option>
+            </select>
+
+            <label>Teslimat Yöntemi</label>
+            <select id="deliverType">
+                <option value="Elden">Elden Teslim</option>
+                <option value="Kargo">Kargo</option>
+                <option value="Ortak Nokta">Ortak Nokta</option>
+            </select>
+            
+            <label>Kiralama Süresi (Sadece kiralama ise)</label>
+            <input type="number" id="lendingDuration" placeholder="Gün sayısı (Opsiyonel)">
+
+            <button id="submitOfferBtn" class="btn-primary" type="button">Teklifi Gönder</button>
+        </form>
+    </div>
+</div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
