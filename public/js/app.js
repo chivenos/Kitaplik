@@ -75,6 +75,7 @@ async function loadCatalog() {
             <b>${book.title}</b><br>
             ${book.author_name || ''}<br>
             ISBN: ${book.isbn}<br>
+            Puan: ${book.general_rating ? (Math.round(book.general_rating * 10) / 10) : '—'}<br>
             <span class="tag sale">Aktif İlan: ${book.total_listings_available || 0}</span>
             <br><br>
             <a href="listings.html?isbn=${book.isbn}">İlanları Gör</a>
@@ -253,7 +254,8 @@ async function loadMyOrders(user) { // sipraisler
             <div class="process-card">
                 <b>${o.title}</b><br>
                 Durum: <span class="status-badge">${o.status}</span><br>
-                Tarih: ${new Date(o.process_date).toLocaleDateString()}
+                Tarih: ${new Date(o.process_date).toLocaleDateString()}<br>
+                ${ (o.status === 'Tamamlandı' || o.status === 'Kargolandı' || o.status === 'Onaylandı') ? `<a class="btn" href="leave-review.html?offer=${o.offer_id}&listing=${o.listing_id}&book_def=${o.book_def_id}&seller=${o.seller_user_id}">Yorum Bırak</a>` : '' }
             </div>
         `).join('');
     }
@@ -302,6 +304,8 @@ async function setupOfferPage(user) {
     
     document.getElementById('summary-book').innerText = listing.title;
     document.getElementById('summary-seller').innerText = listing.user_name;
+    const sellerRatingElem = document.getElementById('summary-seller-rating');
+    if (sellerRatingElem && listing.seller_user_rating !== undefined) sellerRatingElem.innerText = listing.seller_user_rating;
     document.getElementById('summary-condition').innerText = listing.condition;
     document.getElementById('summary-price').innerText = listing.price || '-';
 
@@ -314,26 +318,62 @@ async function setupOfferPage(user) {
             payment_type: document.getElementById('paymentType').value,
             deliver_type: document.getElementById('deliverType').value
         };
+        // Client-side guard: prevent offering on your own listing
+        if (listing.owner_user_id && parseInt(listing.owner_user_id) === parseInt(user.user_id)) {
+            alert('Cannot make an offer on your own listing');
+            return;
+        }
+
         const res = await fetch('/api/offers', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(body)
         });
-        if (res.ok) { alert('Teklif gönderildi!'); window.location.href = 'profile.html'; }
+        if (res.ok) {
+            alert('Teklif gönderildi!'); window.location.href = 'profile.html';
+        } else {
+            // Show popup with server error message if provided
+            try {
+                const err = await res.json();
+                alert(err.message || err.error || 'Teklif gönderilemedi.');
+            } catch (e) {
+                alert('Teklif gönderilemedi.');
+            }
+        }
     };
 }
 
 async function setupLeaveReviewPage(user) {
     if (!user) return window.location.href = 'login.html';
+    // Read params passed from my-orders: offer, listing, book_def, seller
+    const params = new URLSearchParams(window.location.search);
+    const offerId = params.get('offer');
+    const listingId = params.get('listing');
+    const bookDefId = params.get('book_def');
+    const sellerId = params.get('seller');
 
-    const sellerElem = document.querySelector('.item p b');
-    const sellerUsername = sellerElem ? sellerElem.innerText.trim() : null;
-    let reviewedUserId = null;
-    if (sellerUsername) {
-        try {
-            const u = await apiFetch(`/api/user/username/${encodeURIComponent(sellerUsername)}`);
-            reviewedUserId = u.user_id;
-        } catch (e) { console.warn('Seller lookup failed', e); }
+    // Prefill title and seller display
+    let title = null;
+    let sellerName = null;
+    if (listingId) {
+        const listing = await apiFetch(`/api/listings/${listingId}`);
+        if (listing) { title = listing.title; sellerName = listing.user_name; }
+    } else if (offerId) {
+        const offer = await apiFetch(`/api/offers/${offerId}`);
+        if (offer) { title = offer.title; sellerName = offer.requester_name; }
+    } else if (bookDefId) {
+        const cat = await apiFetch(`/api/catalog?book_def_id=${bookDefId}`);
+        if (Array.isArray(cat) && cat.length) title = cat[0].title;
+    }
+
+    if (title) {
+        const img = document.querySelector('.item img');
+        const h3 = document.querySelector('.item h3');
+        if (h3) h3.innerText = title;
+    }
+    if (sellerName) {
+        const p = document.querySelector('.item p b');
+        if (p) p.innerText = sellerName;
     }
 
     document.getElementById('submitReviewBtn').onclick = async (e) => {
@@ -343,14 +383,12 @@ async function setupLeaveReviewPage(user) {
         const comment = document.getElementById('reviewText').value;
 
         if (!point) { alert('Lütfen bir puan seçin.'); return; }
-        const params = new URLSearchParams(window.location.search);
-        const listingId = params.get('listing') || null;
 
         const body = {
-            book_def_id: params.get('book_def') || null,
-            listing_id: listingId,
+            book_def_id: bookDefId || null,
+            listing_id: listingId || null,
             degerlendiren_kullanici_id: user.user_id,
-            degerlendirilen_kullanici_id: reviewedUserId,
+            degerlendirilen_kullanici_id: sellerId || null,
             point: point,
             comment: comment
         };
@@ -361,7 +399,10 @@ async function setupLeaveReviewPage(user) {
             body: JSON.stringify(body)
         });
         if (res.ok) { alert('Teşekkürler — değerlendirme kaydedildi.'); window.location.href = 'profile.html'; }
-        else { alert('Değerlendirme gönderilirken hata oldu.'); }
+        else {
+            try { const err = await res.json(); alert(err.message || 'Değerlendirme gönderilirken hata oldu.'); }
+            catch (e) { alert('Değerlendirme gönderilirken hata oldu.'); }
+        }
     };
 }
 
@@ -442,72 +483,77 @@ async function loadAddresses(userId) { // adresleri yükle
     `).join('');
 }
 
-async function setupEditAddressPage(user) { // adres düzenleme
+async function setupEditAddressPage(user) {
     const params = new URLSearchParams(window.location.search);
     const addrId = params.get('id');
     if (!user) return window.location.href = 'login.html';
 
-    const countries = await apiFetch('/api/countries'); // ülkeleri al
     const countrySelect = document.getElementById('addr-country');
-    countrySelect.innerHTML = countries.map(c => `<option value="${c.country_id}">${c.country_name}</option>`).join('');
+    const citySelect = document.getElementById('addr-city');
+    const countySelect = document.getElementById('addr-county');
 
-    document.getElementById('addr-country').onchange = async (e) => {
-        const countryId = e.target.value;
+    async function loadCities(countryId) {
+        citySelect.innerHTML = '<option>Yükleniyor...</option>';
         const cities = await apiFetch(`/api/cities/${countryId}`);
-        document.getElementById('addr-city').innerHTML = cities.map(ci => `<option value="${ci.city_id}">${ci.city_name}</option>`).join('');
-        if (cities.length > 0) {
-            const counties = await apiFetch(`/api/counties/${cities[0].city_id}`);
-            document.getElementById('addr-county').innerHTML = counties.map(ct => `<option value="${ct.county_id}">${ct.county_name}</option>`).join('');
-        }
-    };
+        citySelect.innerHTML = cities.map(ci => `<option value="${ci.city_id}">${ci.city_name}</option>`).join('');
+        countySelect.innerHTML = '';
+    }
 
-    document.getElementById('addr-city').onchange = async (e) => {
-        const cityId = e.target.value;
+    async function loadCounties(cityId) {
+        countySelect.innerHTML = '<option>Yükleniyor...</option>';
         const counties = await apiFetch(`/api/counties/${cityId}`);
-        document.getElementById('addr-county').innerHTML = counties.map(ct => `<option value="${ct.county_id}">${ct.county_name}</option>`).join('');
-    };
+        countySelect.innerHTML = counties.map(ct => `<option value="${ct.county_id}">${ct.county_name}</option>`).join('');
+    }
+
+    const countries = await apiFetch('/api/countries');
+    countrySelect.innerHTML = countries.map(c => `<option value="${c.country_id}">${c.country_name}</option>`).join('');
+    countrySelect.onchange = async (e) => { await loadCities(e.target.value); };
+    citySelect.onchange = async (e) => { await loadCounties(e.target.value); };
 
     if (addrId) {
         const addr = await apiFetch(`/api/addresses/${addrId}`);
         if (addr) {
             document.getElementById('addr-name').value = addr.adress_name || '';
             document.getElementById('addr-detail').value = addr.adress_detail || '';
-            // select country
-            if (addr.country_name) {
-                // find country option index by text
-                for (const opt of countrySelect.options) if (opt.text === addr.country_name) opt.selected = true;
-                // trigger change to load cities
-                const event = new Event('change');
-                countrySelect.dispatchEvent(event);
-                // wait a tick then set city and county (best-effort)
-                setTimeout(async () => {
-                    const citySelect = document.getElementById('addr-city');
-                    for (const opt of citySelect.options) if (opt.text === addr.city_name) opt.selected = true;
-                    const cityEvent = new Event('change'); citySelect.dispatchEvent(cityEvent);
-                    setTimeout(() => {
-                        const countySelect = document.getElementById('addr-county');
-                        for (const opt of countySelect.options) if (opt.text === addr.county_name) opt.selected = true;
-                    }, 200);
-                }, 200);
+            const selectedCountryOption = Array.from(countrySelect.options).find(opt => opt.text === addr.country_name);
+            if (selectedCountryOption) {
+                countrySelect.value = selectedCountryOption.value;
+                await loadCities(selectedCountryOption.value);
+                const selectedCityOption = Array.from(citySelect.options).find(opt => opt.text === addr.city_name);
+                if (selectedCityOption) {
+                    citySelect.value = selectedCityOption.value;
+                    await loadCounties(selectedCityOption.value);
+                    const selectedCountyOption = Array.from(countySelect.options).find(opt => opt.text === addr.county_name);
+                    if (selectedCountyOption) countySelect.value = selectedCountyOption.value;
+                }
+            }
         }
     }
-
+    if (!addrId && countries.length > 0) { // yeni adres ekleme logici, default olarak 0'daki ülke/şehir/ilçe seçili
+        countrySelect.selectedIndex = 0;
+        countrySelect.dispatchEvent(new Event('change'));
+        await new Promise(r => setTimeout(r, 150));
+        const citySelect = document.getElementById('addr-city');
+        if (citySelect && citySelect.options.length > 0) {
+            citySelect.selectedIndex = 0;
+            citySelect.dispatchEvent(new Event('change'));
+        }
+    }
     document.getElementById('saveAddressBtn').onclick = async () => {
         const body = {
             user_id: user.user_id,
-            county_id: document.getElementById('addr-county').value,
+            county_id: countySelect.value,
             adress_name: document.getElementById('addr-name').value,
             adress_detail: document.getElementById('addr-detail').value
         };
         if (addrId) {
-            const res = await fetch(`/api/addresses/${addrId}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            const res = await fetch(`/api/addresses/${addrId}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) { alert('Adres güncellendi.'); window.location.href = 'profile.html'; }
             else alert('Adres güncelleme hatası.');
         } else {
-            const res = await fetch('/api/addresses', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            const res = await fetch('/api/addresses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
             if (res.ok) { alert('Adres kaydedildi.'); window.location.href = 'profile.html'; }
             else alert('Adres ekleme hatası.');
         }
     };
-    }
 }
