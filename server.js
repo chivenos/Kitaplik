@@ -13,9 +13,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const pool = mysql.createPool({
     host: 'localhost',
-    port: 3006,
+    port: 3306,
     user: 'root',
-    password: 'Bou0tmF5!',
+    password: 'olanzap1n',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -32,7 +32,7 @@ const pool = mysql.createPool({
     }
 })();
 
-
+//
 app.get('/api/catalog', async (req, res) => { // katalog
     try {
         const { q, isbn } = req.query;
@@ -247,11 +247,24 @@ app.get('/api/active-offers', async (req, res) => {
 // userlar ve authentication
 app.post('/api/login', async (req, res) => {
     try {
+        //hem email hem user_name 'email'le temsil ediliyp
         const { email, password } = req.body;
-        const [rows] = await pool.query('SELECT * FROM users WHERE email = ? AND password = ?', [email, password]);
-        if (rows.length > 0) res.json({ success: true, user: rows[0] });
-        else res.status(401).json({ success: false, message: 'Hatalı bilgi' });
+        
+        const sql = 'SELECT * FROM users WHERE email = ? OR user_name = ?';
+        const [users] = await pool.query(sql, [email, email]); 
+
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, errorType: 'USER_NOT_FOUND', message: 'Böyle bir hesap yok, lütfen kayıt olun.' });
+        }
+        const user = users[0];
+        if (user.password === password) {
+            res.json({ success: true, user: user });
+        } else {
+            res.status(401).json({ success: false, errorType: 'WRONG_PASSWORD', message: 'Şifre hatalı!' });
+        }
+
     } catch (err) {
+        console.error(err);
         res.status(500).json(err);
     }
 });

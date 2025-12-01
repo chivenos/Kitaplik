@@ -265,17 +265,48 @@ async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
+    
+    //eski msji sil
+    const existingError = document.getElementById('login-error-msg');
+    if (existingError) existingError.remove();
 
-    const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({email, password})
-    });
-    const result = await res.json();
-    if (result.success) {
-        localStorage.setItem('user', JSON.stringify(result.user));
-        window.location.href = 'profile.html';
-    } else { alert('Hatalı giriş!'); }
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({email, password})
+        });
+        
+        const result = await res.json();
+
+        if (result.success) {
+            localStorage.setItem('user', JSON.stringify(result.user));
+            window.location.href = 'profile.html';
+        } else {
+            //buton altinda hata msji goster
+            const form = document.getElementById('loginBtn').parentNode;
+            const errorP = document.createElement('p');
+            errorP.id = 'login-error-msg';
+            errorP.style.color = 'red';
+            errorP.style.marginTop = '10px';
+            errorP.style.fontWeight = 'bold';
+
+            if (result.errorType === 'USER_NOT_FOUND') {
+                errorP.innerText = 'Böyle bir hesap yok, lütfen kayıt olun.';
+            } else if (result.errorType === 'WRONG_PASSWORD') {
+                errorP.innerText = 'Girdiğiniz şifre hatalı.';
+            } else {
+                errorP.innerText = 'Giriş hatası oluştu.';
+            }
+            const loginBtn = document.getElementById('loginBtn');
+            if(loginBtn) {
+                loginBtn.parentNode.insertBefore(errorP, loginBtn.nextSibling);
+            }
+        }
+    } catch (error) {
+        console.error("Login hatası:", error);
+        alert("Sunucu ile iletişim hatası.");
+    }
 }
 
 async function handleRegister(e) {
@@ -310,6 +341,10 @@ async function setupOfferPage(user) {
     document.getElementById('summary-price').innerText = listing.price || '-';
 
     document.getElementById('submitOfferBtn').onclick = async () => {
+        //eski hata sil
+        const existingError = document.getElementById('offer-error-box');
+        if (existingError) existingError.remove();
+
         const body = {
             listing_id: listingId,
             requester_id: user.user_id,
@@ -318,9 +353,32 @@ async function setupOfferPage(user) {
             payment_type: document.getElementById('paymentType').value,
             deliver_type: document.getElementById('deliverType').value
         };
-        // Client-side guard: prevent offering on your own listing
+
         if (listing.owner_user_id && parseInt(listing.owner_user_id) === parseInt(user.user_id)) {
-            alert('Cannot make an offer on your own listing');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.id = 'offer-error-box';
+            errorDiv.innerText = 'Kendi ilanınıza teklif veremezsiniz!'; 
+            
+            //krmizi cerceve ve yazi stili ekleniyo
+            Object.assign(errorDiv.style, {
+                color: '#721c24',              // Koyu kırmızı yazı
+                backgroundColor: '#f8d7da',    // Açık kırmızı arka plan (daha okunaklı olması için)
+                border: '1px solid #f5c6cb',   // Kırmızı çerçeve
+                padding: '10px',
+                marginTop: '10px',
+                borderRadius: '5px',
+                fontSize: '14px',
+                fontWeight: 'bold'
+            });
+
+            const btn = document.getElementById('submitOfferBtn');
+            if(document.getElementById('offerPrice').value === '') {
+                errorDiv.innerText = 'Lütfen teklif tutarını giriniz!';
+            }
+            if (btn && btn.parentNode) {
+                btn.parentNode.insertBefore(errorDiv, btn.nextSibling);
+            }
             return;
         }
 
@@ -329,10 +387,11 @@ async function setupOfferPage(user) {
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(body)
         });
+        
         if (res.ok) {
-            alert('Teklif gönderildi!'); window.location.href = 'profile.html';
+            alert('Teklif gönderildi!'); 
+            window.location.href = 'profile.html';
         } else {
-            // Show popup with server error message if provided
             try {
                 const err = await res.json();
                 alert(err.message || err.error || 'Teklif gönderilemedi.');
