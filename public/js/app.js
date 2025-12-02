@@ -58,9 +58,7 @@ async function loadCatalog() {
         url += `?isbn=${encodeURIComponent(isbnParam)}`;
     } else {
         const searchInput = document.getElementById('searchTitle');
-        if (searchInput && searchInput.value && searchInput.value.trim() !== '') {
-            url += `?q=${encodeURIComponent(searchInput.value.trim())}`;
-        }
+        if (searchInput && searchInput.value && searchInput.value.trim() !== '') url += `?q=${encodeURIComponent(searchInput.value.trim())}`;
     }
     const data = await apiFetch(url);
     const container = document.getElementById('catalog-container');
@@ -87,9 +85,8 @@ async function loadListings() { //ilanlar
     const params = new URLSearchParams(window.location.search);
     const isbnParam = params.get('isbn');
     let url = '/api/listings';
-    if (isbnParam) {
-        url += `?isbn=${encodeURIComponent(isbnParam)}`;
-    } else {
+    if (isbnParam) url += `?isbn=${encodeURIComponent(isbnParam)}`;
+    else {
         const searchInput = document.getElementById('listingSearch');
         if (searchInput && searchInput.value && searchInput.value.trim() !== '') {
             const q = searchInput.value.trim();
@@ -153,8 +150,7 @@ async function loadProfile(user) { //profil
 
 async function setupAddListingPage(user) { // yeni ilan ekleme
     if (!user) return window.location.href = 'login.html';
-    
-    const books = await apiFetch('/api/catalog'); // Catalog endpointi tüm kitapları döner
+    const books = await apiFetch('/api/catalog'); // katalog endpointi tüm kitapları döner
     const select = document.getElementById('bookSelect');
     
     const validBooks = books.filter(b => b.book_def_id !== null && b.book_def_id !== undefined && b.book_def_id !== '');
@@ -551,7 +547,7 @@ async function setupEditAddressPage(user) {
     const citySelect = document.getElementById('addr-city');
     const countySelect = document.getElementById('addr-county');
 
-    async function loadCities(countryId) {
+    async function loadCities(countryId) { //load cities ve counties fonksiyon içine alınca çalışmaya başladı haha
         citySelect.innerHTML = '<option>Yükleniyor...</option>';
         const cities = await apiFetch(`/api/cities/${countryId}`);
         citySelect.innerHTML = cities.map(ci => `<option value="${ci.city_id}">${ci.city_name}</option>`).join('');
