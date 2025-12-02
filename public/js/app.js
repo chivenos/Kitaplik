@@ -58,7 +58,9 @@ async function loadCatalog() {
         url += `?isbn=${encodeURIComponent(isbnParam)}`;
     } else {
         const searchInput = document.getElementById('searchTitle');
-        if (searchInput && searchInput.value && searchInput.value.trim() !== '') url += `?q=${encodeURIComponent(searchInput.value.trim())}`;
+        if (searchInput && searchInput.value && searchInput.value.trim() !== '') {
+            url += `?q=${encodeURIComponent(searchInput.value.trim())}`;
+        }
     }
     const data = await apiFetch(url);
     const container = document.getElementById('catalog-container');
@@ -84,14 +86,23 @@ async function loadCatalog() {
 async function loadListings() { //ilanlar
     const params = new URLSearchParams(window.location.search);
     const isbnParam = params.get('isbn');
+    const urlSort = params.get('sort');
     let url = '/api/listings';
-    if (isbnParam) url += `?isbn=${encodeURIComponent(isbnParam)}`;
-    else {
+    const sortSelect = document.getElementById('listingSort');
+    if (sortSelect && urlSort) sortSelect.value = urlSort;
+    if (isbnParam) {
+        url += `?isbn=${encodeURIComponent(isbnParam)}`;
+    } else {
         const searchInput = document.getElementById('listingSearch');
         if (searchInput && searchInput.value && searchInput.value.trim() !== '') {
             const q = searchInput.value.trim();
             url += `?q=${encodeURIComponent(q)}`;
         }
+    }
+    // Append sort param from select if present
+    const sortVal = sortSelect ? sortSelect.value : null;
+    if (sortVal) {
+        url += (url.includes('?') ? '&' : '?') + `sort=${encodeURIComponent(sortVal)}`;
     }
     const data = await apiFetch(url);
     const container = document.getElementById('listings-container');
@@ -103,7 +114,9 @@ async function loadListings() { //ilanlar
             <div>
                 <b>${l.title}</b><br>
                 Satıcı: ${l.seller}<br>
+                Puan: ${l.general_rating !== undefined ? (Math.round(l.general_rating*10)/10) : '—'}<br>
                 Durum: ${l.condition}<br>
+                Fiyat: ${l.price ? l.price + '₺' : '-'}<br>
                 <a href="offer.html?listing=${l.listing_id}">Teklif Ver</a>
             </div>
         </div>
@@ -116,6 +129,58 @@ async function loadProfile(user) { //profil
     document.getElementById('profile-username').innerText = data.user.user_name;
     document.getElementById('profile-name').innerText = `${data.user.name} ${data.user.surname}`;
     document.getElementById('seller-rating').innerText = data.user.seller_user_rating;
+    document.getElementById('customer-rating').innerText = data.user.customer_user_rating || '-';
+
+    // Setup Edit Profile button and form
+    const editBtn = document.getElementById('editProfileBtn');
+    const editForm = document.getElementById('edit-profile-form');
+    const saveBtn = document.getElementById('saveProfileBtn');
+    const cancelBtn = document.getElementById('cancelEditProfileBtn');
+    if (editBtn && editForm) {
+        editBtn.onclick = (e) => {
+            e.preventDefault();
+            // Prefill fields
+            document.getElementById('edit-name').value = data.user.name || '';
+            document.getElementById('edit-surname').value = data.user.surname || '';
+            document.getElementById('edit-username').value = data.user.user_name || '';
+            document.getElementById('edit-email').value = data.user.email || '';
+            document.getElementById('edit-password').value = '';
+            editForm.style.display = 'block';
+            editBtn.style.display = 'none';
+        };
+    }
+    if (cancelBtn) {
+        cancelBtn.onclick = () => { document.getElementById('edit-profile-form').style.display = 'none'; document.getElementById('editProfileBtn').style.display = 'inline-block'; };
+    }
+    if (saveBtn) {
+        saveBtn.onclick = async () => {
+            const body = {
+                name: document.getElementById('edit-name').value,
+                surname: document.getElementById('edit-surname').value,
+                user_name: document.getElementById('edit-username').value,
+                email: document.getElementById('edit-email').value,
+            };
+            const pwd = document.getElementById('edit-password').value;
+            if (pwd && pwd.trim() !== '') body.password = pwd;
+
+            const res = await fetch(`/api/user/${data.user.user_id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+            if (res.ok) {
+                alert('Profil güncellendi.');
+                const refreshed = await apiFetch(`/api/user/${user.user_id}`);
+                if (refreshed && refreshed.user) {
+                    localStorage.setItem('user', JSON.stringify(refreshed.user));
+                    loadProfile(refreshed.user);
+                } else window.location.reload();
+            } else {
+                let err = null;
+                try { err = await res.json(); } catch (e) { }
+                if (err && err.errorType === 'EMAIL_TAKEN') alert('Bu email başka bir kullanıcı tarafından kullanılıyor.');
+                else if (err && err.errorType === 'USERNAME_TAKEN') alert('Bu kullanıcı adı başka bir kullanıcı tarafından alınmış.');
+                else if (err && err.message) alert(err.message);
+                else alert('Güncelleme hatası');
+            }
+        };
+    }
 
     // İlanlar
     const listDiv = document.getElementById('my-listings'); // ilanlar
@@ -150,7 +215,8 @@ async function loadProfile(user) { //profil
 
 async function setupAddListingPage(user) { // yeni ilan ekleme
     if (!user) return window.location.href = 'login.html';
-    const books = await apiFetch('/api/catalog'); // katalog endpointi tüm kitapları döner
+    
+    const books = await apiFetch('/api/catalog'); // Catalog endpointi tüm kitapları döner
     const select = document.getElementById('bookSelect');
     
     const validBooks = books.filter(b => b.book_def_id !== null && b.book_def_id !== undefined && b.book_def_id !== '');
@@ -319,8 +385,15 @@ async function handleRegister(e) {
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body)
     });
-    if (res.ok) { alert('Kayıt başarılı! Giriş yapınız.'); window.location.href = 'login.html'; }
-    else alert('Kayıt hatası.');
+    if (res.ok) {
+        alert('Kayıt başarılı! Giriş yapınız.'); window.location.href = 'login.html';
+    } else {
+        let err = null;
+        try { err = await res.json(); } catch (e) { }
+        if (err && err.errorType === 'EMAIL_TAKEN') alert('Bu email zaten kullanılıyor.');
+        else if (err && err.errorType === 'USERNAME_TAKEN') alert('Bu kullanıcı adı zaten alınmış.');
+        else alert(err && err.message ? err.message : 'Kayıt hatası.');
+    }
 }
 
 async function setupOfferPage(user) { 
@@ -430,6 +503,25 @@ async function setupLeaveReviewPage(user) {
         const p = document.querySelector('.item p b');
         if (p) p.innerText = sellerName;
     }
+
+    // If user already left a review for this listing/book, prefill form (we overwrite previous)
+    try {
+        let existingReview = null;
+        if (listingId) {
+            const reviews = await apiFetch(`/api/reviews?listing_id=${listingId}`);
+            if (Array.isArray(reviews)) existingReview = reviews.find(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id));
+        }
+        if (!existingReview && bookDefId) {
+            const reviews = await apiFetch(`/api/reviews?book_def_id=${bookDefId}`);
+            if (Array.isArray(reviews)) existingReview = reviews.find(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id) && !r.listing_id);
+        }
+        if (existingReview) {
+            // Prefill point and comment
+            const star = document.querySelector(`input[name="rating"][value="${existingReview.point}"]`);
+            if (star) star.checked = true;
+            document.getElementById('reviewText').value = existingReview.comment || '';
+        }
+    } catch (e) { console.warn('Could not fetch existing review', e); }
 
     document.getElementById('submitReviewBtn').onclick = async (e) => {
         e.preventDefault();
@@ -547,7 +639,7 @@ async function setupEditAddressPage(user) {
     const citySelect = document.getElementById('addr-city');
     const countySelect = document.getElementById('addr-county');
 
-    async function loadCities(countryId) { //load cities ve counties fonksiyon içine alınca çalışmaya başladı haha
+    async function loadCities(countryId) {
         citySelect.innerHTML = '<option>Yükleniyor...</option>';
         const cities = await apiFetch(`/api/cities/${countryId}`);
         citySelect.innerHTML = cities.map(ci => `<option value="${ci.city_id}">${ci.city_name}</option>`).join('');

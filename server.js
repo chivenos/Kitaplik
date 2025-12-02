@@ -7,7 +7,7 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json()); 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -52,7 +52,9 @@ app.get('/api/catalog', async (req, res) => { // katalog
             const like = `%${q}%`;
             sql += ` WHERE bd.title LIKE ? OR a.author_name LIKE ? OR bd.isbn LIKE ? GROUP BY bd.book_def_id`;
             params = [like, like, like];
-        } else sql += ` GROUP BY bd.book_def_id`;
+        } else {
+            sql += ` GROUP BY bd.book_def_id`;
+        }
 
         const [results] = await pool.query(sql, params);
         res.json(results);
@@ -62,32 +64,41 @@ app.get('/api/catalog', async (req, res) => { // katalog
     }
 });
 
-app.get('/api/listings', async (req, res) => { // listings
+app.get('/api/listings', async (req, res) => { // listings with optional sorting
     try {
-        const { q, isbn } = req.query;
-        if (isbn || q) {
-            let sql = `
-                SELECT l.listing_id, bd.title, u.user_name as seller, l.condition, l.status, l.price
-                FROM listings l
-                JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
-                JOIN users u ON l.owner_user_id = u.user_id
-                LEFT JOIN authors a ON bd.author_id = a.author_id
-                WHERE l.status = 'Yayinda'
-            `;
-            let params = [];
-            if (isbn) {
-                sql += ` AND bd.isbn = ?`;
-                params = [isbn];
-            } else if (q) {
-                const like = `%${q}%`;
-                sql += ` AND (bd.title LIKE ? OR a.author_name LIKE ? OR bd.isbn LIKE ?)`;
-                params = [like, like, like];
-            }
-            const [results] = await pool.query(sql, params);
-            return res.json(results);
+        const { q, isbn, sort } = req.query;
+        let sql = `
+            SELECT l.listing_id, bd.title, u.user_name as seller, l.condition, l.status, l.price, bd.general_rating
+            FROM listings l
+            JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
+            JOIN users u ON l.owner_user_id = u.user_id
+            LEFT JOIN authors a ON bd.author_id = a.author_id
+            WHERE l.status = 'Yayinda'
+        `;
+        const params = [];
+
+        if (isbn) {
+            sql += ` AND bd.isbn = ?`;
+            params.push(isbn);
+        } else if (q) {
+            const like = `%${q}%`;
+            sql += ` AND (bd.title LIKE ? OR a.author_name LIKE ? OR bd.isbn LIKE ?)`;
+            params.push(like, like, like);
         }
 
-        const [results] = await pool.query('SELECT * FROM view_active_listings');
+        // Sorting
+        let orderClause = 'l.listing_id DESC'; // default: newest by id desc
+        switch ((sort || '').toLowerCase()) {
+            case 'price_asc': orderClause = 'l.price ASC'; break;
+            case 'price_desc': orderClause = 'l.price DESC'; break;
+            case 'rating': orderClause = 'bd.general_rating DESC'; break;
+            case 'alpha': orderClause = 'bd.title ASC'; break;
+            case 'newest': orderClause = 'l.listing_id DESC'; break;
+        }
+
+        sql += ` ORDER BY ${orderClause}`;
+
+        const [results] = await pool.query(sql, params);
         res.json(results);
     } catch (err) {
         res.status(500).json(err);
@@ -126,7 +137,7 @@ app.post('/api/listings', async (req, res) => {  // create listing
 app.put('/api/listings/:id', async (req, res) => { // update listing
     try {
         const { condition, explanation, price } = req.body;
-        await pool.query('UPDATE listings SET `condition` = ?, explanation = ?, price = ? WHERE listing_id = ?',
+        await pool.query('UPDATE listings SET `condition` = ?, explanation = ?, price = ? WHERE listing_id = ?', 
             [condition, explanation, price, req.params.id]
         );
         res.json({ success: true });
@@ -135,7 +146,7 @@ app.put('/api/listings/:id', async (req, res) => { // update listing
     }
 });
 
-app.post('/api/listings/:id/status', async (req, res) => {
+app.post('/api/listings/:id/status', async (req, res) => { 
     try {
         const { status } = req.body;
         await pool.query('UPDATE listings SET status = ? WHERE listing_id = ?', [status, req.params.id]);
@@ -179,13 +190,13 @@ app.post('/api/offers', async (req, res) => {
 });
 
 app.post('/api/offers/:id/accept', async (req, res) => { //accept offer, while rejecting others 
-    const connection = await pool.getConnection();
+    const connection = await pool.getConnection(); 
     try {
         await connection.beginTransaction();
         const offerId = req.params.id;
         const [offers] = await connection.query('SELECT * FROM offers WHERE offer_id = ?', [offerId]);
         if (offers.length === 0) throw new Error('Offer not found');
-
+        
         const offer = offers[0];
         const listingId = offer.listing_id;
 
@@ -202,7 +213,7 @@ app.post('/api/offers/:id/accept', async (req, res) => { //accept offer, while r
         res.json({ success: true });
     } catch (err) {
         await connection.rollback();
-        console.error("İşlem Başarısız:", err);
+        console.error("Transaction Failed:", err);
         res.status(500).json({ error: err.message });
     } finally {
         connection.release();
@@ -218,7 +229,7 @@ app.post('/api/offers/:id/reject', async (req, res) => {
     }
 });
 
-app.get('/api/offers/:id', async (req, res) => {
+app.get('/api/offers/:id', async (req, res) => { 
     try {
         const sql = `SELECT o.*, bd.title, u.user_name as requester_name 
                      FROM offers o 
@@ -247,9 +258,9 @@ app.post('/api/login', async (req, res) => {
     try {
         //hem email hem user_name 'email'le temsil ediliyp
         const { email, password } = req.body;
-
+        
         const sql = 'SELECT * FROM users WHERE email = ? OR user_name = ?';
-        const [users] = await pool.query(sql, [email, email]);
+        const [users] = await pool.query(sql, [email, email]); 
 
         if (users.length === 0) {
             return res.status(404).json({ success: false, errorType: 'USER_NOT_FOUND', message: 'Böyle bir hesap yok, lütfen kayıt olun.' });
@@ -270,6 +281,15 @@ app.post('/api/login', async (req, res) => {
 app.post('/api/register', async (req, res) => {
     try {
         const { name, surname, user_name, email, password } = req.body;
+        // check uniqueness for email and user_name
+        const [exists] = await pool.query('SELECT * FROM users WHERE email = ? OR user_name = ? LIMIT 1', [email, user_name]);
+        if (exists.length > 0) {
+            const u = exists[0];
+            if (u.email === email) return res.status(400).json({ success: false, errorType: 'EMAIL_TAKEN', message: 'Bu email zaten kullanılıyor.' });
+            if (u.user_name === user_name) return res.status(400).json({ success: false, errorType: 'USERNAME_TAKEN', message: 'Bu kullanıcı adı zaten alınmış.' });
+            return res.status(400).json({ success: false, message: 'Kullanıcı bilgileri çakışıyor.' });
+        }
+
         const [result] = await pool.query('INSERT INTO users (name, surname, user_name, email, password) VALUES (?,?,?,?,?)', [name, surname, user_name, email, password]);
         res.json({ success: true, insertId: result.insertId });
     } catch (err) {
@@ -280,7 +300,7 @@ app.post('/api/register', async (req, res) => {
 app.get('/api/user/username/:username', async (req, res) => {
     try {
         const [results] = await pool.query('SELECT * FROM users WHERE user_name = ?', [req.params.username]);
-        if (results.length === 0) return res.status(404).json({ message: 'Kulanıcı bulunamadı' });
+        if (results.length === 0) return res.status(404).json({ message: 'User not found' });
         res.json(results[0]);
     } catch (err) {
         res.status(500).json(err);
@@ -311,7 +331,35 @@ app.get('/api/user/:id', async (req, res) => { // profile detail
     }
 });
 
-app.get('/api/user/:id/orders', async (req, res) => {
+// Update user profile
+app.put('/api/user/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const { name, surname, user_name, email, password } = req.body;
+
+        // Basic validation: ensure required fields
+        if (!user_name || !email) return res.status(400).json({ success: false, message: 'Kullanıcı adı ve email gerekli.' });
+
+        // Check uniqueness: email or username used by another user?
+        const [conflicts] = await pool.query('SELECT * FROM users WHERE (email = ? OR user_name = ?) AND user_id != ? LIMIT 1', [email, user_name, userId]);
+        if (conflicts.length > 0) {
+            const u = conflicts[0];
+            if (u.email === email) return res.status(400).json({ success: false, errorType: 'EMAIL_TAKEN', message: 'Bu email başka bir kullanıcı tarafından kullanılıyor.' });
+            if (u.user_name === user_name) return res.status(400).json({ success: false, errorType: 'USERNAME_TAKEN', message: 'Bu kullanıcı adı başka bir kullanıcı tarafından alınmış.' });
+            return res.status(400).json({ success: false, message: 'Kullanıcı bilgileri çakışıyor.' });
+        }
+
+        // Perform update
+        const params = password ? [name, surname, user_name, email, password, userId] : [name, surname, user_name, email, userId];
+        const sql = 'UPDATE users SET name = ?, surname = ?, user_name = ?, email = ?' + (password ? ', password = ?' : '') + ' WHERE user_id = ?';
+        const [result] = await pool.query(sql, params);
+        res.json({ success: true, affectedRows: result.affectedRows });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+app.get('/api/user/:id/orders', async (req, res) => { 
     try {
         const sql = `
             SELECT o.offer_id, l.listing_id, bd.book_def_id, l.owner_user_id as seller_user_id, bd.title, o.status, o.offer_date as process_date, o.price
@@ -334,8 +382,8 @@ app.post('/api/books', async (req, res) => { // book definitions
         const getOrInsert = async (table, col, val) => {
             if (!val) return null;
             const [rows] = await pool.query(`SELECT * FROM ${table} WHERE ${col} = ? LIMIT 1`, [val]);
-            if (rows.length > 0) return rows[0][col.replace('_name', '_id')];
-
+            if (rows.length > 0) return rows[0][col.replace('_name', '_id')]; 
+            
             const [res] = await pool.query(`INSERT INTO ${table} (${col}) VALUES (?)`, [val]);
             return res.insertId;
         };
@@ -357,7 +405,7 @@ app.post('/api/books', async (req, res) => { // book definitions
 app.post('/api/addresses', async (req, res) => {  // adresler 
     try {
         const { user_id, county_id, adress_name, adress_detail } = req.body;
-        const [result] = await pool.query('INSERT INTO adresses (user_id, county_id, adress_name, adress_detail) VALUES (?, ?, ?, ?)',
+        const [result] = await pool.query('INSERT INTO adresses (user_id, county_id, adress_name, adress_detail) VALUES (?, ?, ?, ?)', 
             [user_id, county_id, adress_name, adress_detail]
         );
         res.json({ success: true, insertId: result.insertId });
@@ -379,7 +427,7 @@ app.get('/api/user/:id/addresses', async (req, res) => {
 app.get('/api/addresses/:id', async (req, res) => {
     try {
         const [results] = await pool.query('SELECT a.*, cnt.county_name, ci.city_name, co.country_name FROM adresses a JOIN counties cnt ON a.county_id = cnt.county_id JOIN cities ci ON cnt.city_id = ci.city_id JOIN countries co ON ci.country_id = co.country_id WHERE a.adress_id = ?', [req.params.id]);
-        if (results.length === 0) return res.status(404).json({ message: 'Böyle bir adres bulunamadı' });
+        if (results.length === 0) return res.status(404).json({ message: 'Address not found' });
         res.json(results[0]);
     } catch (err) {
         res.status(500).json(err);
@@ -389,7 +437,7 @@ app.get('/api/addresses/:id', async (req, res) => {
 app.put('/api/addresses/:id', async (req, res) => {
     try {
         const { county_id, adress_name, adress_detail } = req.body;
-        await pool.query('UPDATE adresses SET county_id = ?, adress_name = ?, adress_detail = ? WHERE adress_id = ?',
+        await pool.query('UPDATE adresses SET county_id = ?, adress_name = ?, adress_detail = ? WHERE adress_id = ?', 
             [county_id, adress_name, adress_detail, req.params.id]
         );
         res.json({ success: true });
@@ -411,10 +459,31 @@ app.delete('/api/addresses/:id', async (req, res) => {
 app.post('/api/reviews', async (req, res) => {
     try {
         const { book_def_id, listing_id, degerlendiren_kullanici_id, degerlendirilen_kullanici_id, point, comment } = req.body;
-        const sql = 'INSERT INTO reviews (book_def_id, listing_id, degerlendiren_kullanici_id, degerlendirilen_kullanici_id, point, `comment`) VALUES (?, ?, ?, ?, ?, ?)';
-        const [result] = await pool.query(sql, [book_def_id || null, listing_id || null, degerlendiren_kullanici_id, degerlendirilen_kullanici_id, point, comment || null]);
 
-        if (book_def_id) { //update book rating
+        // First, check if this reviewer already left a review for this listing or book
+        let existing = [];
+        if (listing_id) {
+            const [rows] = await pool.query('SELECT * FROM reviews WHERE listing_id = ? AND degerlendiren_kullanici_id = ? LIMIT 1', [listing_id, degerlendiren_kullanici_id]);
+            existing = rows;
+        } else if (book_def_id) {
+            const [rows] = await pool.query('SELECT * FROM reviews WHERE book_def_id = ? AND degerlendiren_kullanici_id = ? AND listing_id IS NULL LIMIT 1', [book_def_id, degerlendiren_kullanici_id]);
+            existing = rows;
+        }
+
+        let reviewId = null;
+        if (existing && existing.length > 0) {
+            // Update existing review (user edits their previous review)
+            const rev = existing[0];
+            await pool.query('UPDATE reviews SET point = ?, `comment` = ?, comment_date = NOW() WHERE review_id = ?', [point, comment || null, rev.review_id]);
+            reviewId = rev.review_id;
+        } else {
+            const sql = 'INSERT INTO reviews (book_def_id, listing_id, degerlendiren_kullanici_id, degerlendirilen_kullanici_id, point, `comment`) VALUES (?, ?, ?, ?, ?, ?)';
+            const [result] = await pool.query(sql, [book_def_id || null, listing_id || null, degerlendiren_kullanici_id, degerlendirilen_kullanici_id, point, comment || null]);
+            reviewId = result.insertId;
+        }
+
+        // Recalculate aggregates
+        if (book_def_id) { // update book rating
             const [rows] = await pool.query('SELECT AVG(point) AS avgp FROM reviews WHERE book_def_id = ?', [book_def_id]);
             if (rows.length > 0) await pool.query('UPDATE book_definitions SET general_rating = ? WHERE book_def_id = ?', [rows[0].avgp || 0, book_def_id]);
         }
@@ -427,7 +496,7 @@ app.post('/api/reviews', async (req, res) => {
         const [r2] = await pool.query('SELECT AVG(point) AS avg_customer FROM reviews WHERE degerlendirilen_kullanici_id = ? AND listing_id IS NULL', [degerlendirilen_kullanici_id]);
         await pool.query('UPDATE users SET customer_user_rating = ? WHERE user_id = ?', [r2[0].avg_customer || 0, degerlendirilen_kullanici_id]);
 
-        res.json({ success: true, insertId: result.insertId });
+        res.json({ success: true, reviewId });
     } catch (err) {
         res.status(500).json(err);
     }

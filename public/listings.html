@@ -26,6 +26,16 @@
             <label>Arama</label>
             <input type="text" id="listingSearch" placeholder="Kitap veya yazar...">
         </div>
+        <div class="filter-group">
+            <label>Sırala</label>
+            <select id="listingSort" onchange="loadListings()">
+                <option value="newest">Yeniye Göre (Yeni önce)</option>
+                <option value="price_asc">Fiyata Göre (Ucuz önce)</option>
+                <option value="price_desc">Fiyata Göre (Pahalı önce)</option>
+                <option value="rating">Puana Göre (Yüksek önce)</option>
+                <option value="alpha">Alfabetik (A-Z)</option>
+            </select>
+        </div>
         <button class="btn" onclick="loadListings()">Filtrele</button>
     </div>
 
