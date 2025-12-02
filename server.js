@@ -13,9 +13,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const pool = mysql.createPool({
     host: 'localhost',
-    port: 3306,
+    port: 3006,
     user: 'root',
-    password: 'Allah123!',
+    password: 'Bou0tmF5!',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -68,7 +68,7 @@ app.get('/api/listings', async (req, res) => { // listings with optional sorting
     try {
         const { q, isbn, sort } = req.query;
         let sql = `
-            SELECT l.listing_id, bd.title, u.user_name as seller, l.condition, l.status, l.price, bd.general_rating
+            SELECT l.listing_id, bd.title, u.user_name as seller, u.user_id as seller_user_id, l.condition, l.status, l.price, bd.general_rating
             FROM listings l
             JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
             JOIN users u ON l.owner_user_id = u.user_id
@@ -167,7 +167,7 @@ app.delete('/api/listings/:id', async (req, res) => { // delete listing
 
 app.get('/api/listings/:id/offers', async (req, res) => { // teklifler/offerlar
     try {
-        const sql = `SELECT o.*, u.user_name as requester_name FROM offers o JOIN users u ON o.requester_id = u.user_id WHERE o.listing_id = ? ORDER BY o.offer_date DESC`;
+        const sql = `SELECT o.*, u.user_name as requester_name, u.user_id as requester_id FROM offers o JOIN users u ON o.requester_id = u.user_id WHERE o.listing_id = ? ORDER BY o.offer_date DESC`;
         const [results] = await pool.query(sql, [req.params.id]);
         res.json(results);
     } catch (err) {
@@ -231,7 +231,7 @@ app.post('/api/offers/:id/reject', async (req, res) => {
 
 app.get('/api/offers/:id', async (req, res) => { 
     try {
-        const sql = `SELECT o.*, bd.title, u.user_name as requester_name 
+        const sql = `SELECT o.*, bd.title, u.user_name as requester_name, u.user_id as requester_id
                      FROM offers o 
                      JOIN listings l ON o.listing_id = l.listing_id
                      JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
@@ -313,7 +313,7 @@ app.get('/api/user/:id', async (req, res) => { // profile detail
         const [users] = await pool.query('SELECT * FROM users WHERE user_id = ?', [userId]);
         const [listings] = await pool.query('SELECT l.*, bd.title FROM listings l JOIN book_definitions bd ON l.book_def_id = bd.book_def_id WHERE l.owner_user_id = ?', [userId]);
         const [offers] = await pool.query(`
-            SELECT o.*, bd.title, u.user_name as requester_name 
+            SELECT o.*, bd.title, u.user_name as requester_name, u.user_id as requester_id 
             FROM offers o 
             JOIN listings l ON o.listing_id = l.listing_id 
             JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
@@ -326,6 +326,38 @@ app.get('/api/user/:id', async (req, res) => { // profile detail
             listings: listings,
             offers: offers
         });
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+// public profile (read-only): basic user info, public listings, and received reviews
+app.get('/api/user/:id/public', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const [users] = await pool.query('SELECT user_id, user_name, name, surname, seller_user_rating, customer_user_rating FROM users WHERE user_id = ?', [userId]);
+        if (users.length === 0) return res.status(404).json({ message: 'User not found' });
+
+        const [listings] = await pool.query(`
+            SELECT l.listing_id, bd.title, l.price, l.status, bd.general_rating
+            FROM listings l
+            JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
+            WHERE l.owner_user_id = ? AND l.status = 'Yayinda'
+            ORDER BY l.listing_id DESC
+        `, [userId]);
+
+        const sql = `
+            SELECT r.*, u.user_name as reviewer_name, u.user_id as reviewer_id, bd.title as book_title, l.listing_id
+            FROM reviews r
+            JOIN users u ON r.degerlendiren_kullanici_id = u.user_id
+            LEFT JOIN book_definitions bd ON r.book_def_id = bd.book_def_id
+            LEFT JOIN listings l ON r.listing_id = l.listing_id
+            WHERE r.degerlendirilen_kullanici_id = ?
+            ORDER BY r.comment_date DESC
+        `;
+        const [reviews] = await pool.query(sql, [userId]);
+
+        res.json({ user: users[0], listings, reviews });
     } catch (err) {
         res.status(500).json(err);
     }
@@ -524,7 +556,7 @@ app.get('/api/user/:id/reviews', async (req, res) => { // bir kişinin aldığı
     try {
         const userId = req.params.id;
         const sql = `
-            SELECT r.*, u.user_name as reviewer_name, bd.title as book_title, l.listing_id
+            SELECT r.*, u.user_name as reviewer_name, u.user_id as reviewer_id, bd.title as book_title, l.listing_id
             FROM reviews r
             JOIN users u ON r.degerlendiren_kullanici_id = u.user_id
             LEFT JOIN book_definitions bd ON r.book_def_id = bd.book_def_id

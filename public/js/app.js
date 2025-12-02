@@ -46,6 +46,12 @@ function logout() { localStorage.removeItem('user'); window.location.href = 'ind
 async function apiFetch(url, options = {}) {
     try {
         const res = await fetch(url, options);
+        if (!res.ok) {
+            let errBody = null;
+            try { errBody = await res.json(); } catch (e) { errBody = await res.text().catch(()=>null); }
+            console.error('apiFetch non-OK', url, res.status, errBody);
+            return null;
+        }
         return await res.json();
     } catch (e) { console.error("API Hatası:", e); return []; }
 }
@@ -113,7 +119,7 @@ async function loadListings() { //ilanlar
             <img src="img/book1.jpg">
             <div>
                 <b>${l.title}</b><br>
-                Satıcı: ${l.seller}<br>
+                Satıcı: ${ l.seller_user_id ? ('<a href="profile.html?user='+l.seller_user_id+'">'+l.seller+'</a>') : (l.seller || '-') }<br>
                 Puan: ${l.general_rating !== undefined ? (Math.round(l.general_rating*10)/10) : '—'}<br>
                 Durum: ${l.condition}<br>
                 Fiyat: ${l.price ? l.price + '₺' : '-'}<br>
@@ -123,68 +129,97 @@ async function loadListings() { //ilanlar
     `).join('');
 }
 
-async function loadProfile(user) { //profil
-    if (!user) return window.location.href = 'login.html';
-    const data = await apiFetch(`/api/user/${user.user_id}`);
+async function loadProfile(user) { // profil (supports public view via ?user=<id>)
+    const params = new URLSearchParams(window.location.search);
+    const publicUserId = params.get('user');
+    let data;
+    let isPublicView = false;
+
+    if (publicUserId) {
+        data = await apiFetch(`/api/user/${publicUserId}/public`);
+        // If public endpoint didn't return expected shape, try fallback to regular user endpoint
+        if (!data || !data.user) {
+            console.warn('Public profile endpoint returned unexpected shape, trying fallback /api/user/:id', publicUserId, data);
+            const fallback = await apiFetch(`/api/user/${publicUserId}`);
+            if (fallback && fallback.user) {
+                // shape is { user, listings, offers } - convert to public-like shape
+                data = { user: fallback.user, listings: fallback.listings || [], reviews: [] };
+                isPublicView = true;
+            } else {
+                return document.getElementById('content') ? document.getElementById('content').innerHTML = '<p>Kullanıcı bulunamadı.</p>' : document.body.innerHTML = '<p>Kullanıcı bulunamadı.</p>';
+            }
+        } else {
+            isPublicView = true;
+        }
+    } else {
+        if (!user) return window.location.href = 'login.html';
+        data = await apiFetch(`/api/user/${user.user_id}`);
+    }
+
     document.getElementById('profile-username').innerText = data.user.user_name;
-    document.getElementById('profile-name').innerText = `${data.user.name} ${data.user.surname}`;
+    document.getElementById('profile-name').innerText = `${data.user.name || ''} ${data.user.surname || ''}`.trim();
     document.getElementById('seller-rating').innerText = data.user.seller_user_rating;
     document.getElementById('customer-rating').innerText = data.user.customer_user_rating || '-';
 
-    // Setup Edit Profile button and form
+    // Setup Edit Profile button and form (hide if public view)
     const editBtn = document.getElementById('editProfileBtn');
     const editForm = document.getElementById('edit-profile-form');
     const saveBtn = document.getElementById('saveProfileBtn');
     const cancelBtn = document.getElementById('cancelEditProfileBtn');
-    if (editBtn && editForm) {
-        editBtn.onclick = (e) => {
-            e.preventDefault();
-            // Prefill fields
-            document.getElementById('edit-name').value = data.user.name || '';
-            document.getElementById('edit-surname').value = data.user.surname || '';
-            document.getElementById('edit-username').value = data.user.user_name || '';
-            document.getElementById('edit-email').value = data.user.email || '';
-            document.getElementById('edit-password').value = '';
-            editForm.style.display = 'block';
-            editBtn.style.display = 'none';
-        };
-    }
-    if (cancelBtn) {
-        cancelBtn.onclick = () => { document.getElementById('edit-profile-form').style.display = 'none'; document.getElementById('editProfileBtn').style.display = 'inline-block'; };
-    }
-    if (saveBtn) {
-        saveBtn.onclick = async () => {
-            const body = {
-                name: document.getElementById('edit-name').value,
-                surname: document.getElementById('edit-surname').value,
-                user_name: document.getElementById('edit-username').value,
-                email: document.getElementById('edit-email').value,
+
+    if (isPublicView) {
+        if (editBtn) editBtn.style.display = 'none';
+        if (editForm) editForm.style.display = 'none';
+    } else {
+        if (editBtn && editForm) {
+            editBtn.onclick = (e) => {
+                e.preventDefault();
+                document.getElementById('edit-name').value = data.user.name || '';
+                document.getElementById('edit-surname').value = data.user.surname || '';
+                document.getElementById('edit-username').value = data.user.user_name || '';
+                document.getElementById('edit-email').value = data.user.email || '';
+                document.getElementById('edit-password').value = '';
+                editForm.style.display = 'block';
+                editBtn.style.display = 'none';
             };
-            const pwd = document.getElementById('edit-password').value;
-            if (pwd && pwd.trim() !== '') body.password = pwd;
+        }
+        if (cancelBtn) {
+            cancelBtn.onclick = () => { document.getElementById('edit-profile-form').style.display = 'none'; if (editBtn) editBtn.style.display = 'inline-block'; };
+        }
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const body = {
+                    name: document.getElementById('edit-name').value,
+                    surname: document.getElementById('edit-surname').value,
+                    user_name: document.getElementById('edit-username').value,
+                    email: document.getElementById('edit-email').value,
+                };
+                const pwd = document.getElementById('edit-password').value;
+                if (pwd && pwd.trim() !== '') body.password = pwd;
 
-            const res = await fetch(`/api/user/${data.user.user_id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
-            if (res.ok) {
-                alert('Profil güncellendi.');
-                const refreshed = await apiFetch(`/api/user/${user.user_id}`);
-                if (refreshed && refreshed.user) {
-                    localStorage.setItem('user', JSON.stringify(refreshed.user));
-                    loadProfile(refreshed.user);
-                } else window.location.reload();
-            } else {
-                let err = null;
-                try { err = await res.json(); } catch (e) { }
-                if (err && err.errorType === 'EMAIL_TAKEN') alert('Bu email başka bir kullanıcı tarafından kullanılıyor.');
-                else if (err && err.errorType === 'USERNAME_TAKEN') alert('Bu kullanıcı adı başka bir kullanıcı tarafından alınmış.');
-                else if (err && err.message) alert(err.message);
-                else alert('Güncelleme hatası');
-            }
-        };
+                const res = await fetch(`/api/user/${data.user.user_id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                if (res.ok) {
+                    alert('Profil güncellendi.');
+                    const refreshed = await apiFetch(`/api/user/${user.user_id}`);
+                    if (refreshed && refreshed.user) {
+                        localStorage.setItem('user', JSON.stringify(refreshed.user));
+                        loadProfile(refreshed.user);
+                    } else window.location.reload();
+                } else {
+                    let err = null;
+                    try { err = await res.json(); } catch (e) { }
+                    if (err && err.errorType === 'EMAIL_TAKEN') alert('Bu email başka bir kullanıcı tarafından kullanılıyor.');
+                    else if (err && err.errorType === 'USERNAME_TAKEN') alert('Bu kullanıcı adı başka bir kullanıcı tarafından alınmış.');
+                    else if (err && err.message) alert(err.message);
+                    else alert('Güncelleme hatası');
+                }
+            };
+        }
     }
 
-    // İlanlar
+    // Listings
     const listDiv = document.getElementById('my-listings'); // ilanlar
-    if (data.listings.length === 0) listDiv.innerHTML = '<p>Aktif ilanınız yok.</p>';
+    if (!Array.isArray(data.listings) || data.listings.length === 0) listDiv.innerHTML = `<p>${isPublicView ? 'Kullanıcının aktif ilanı yok.' : 'Aktif ilanınız yok.'}</p>`;
     else {
         listDiv.innerHTML = data.listings.map(l => `
             <div class="list-row">
@@ -192,26 +227,36 @@ async function loadProfile(user) { //profil
                 <div>
                     <b>${l.title}</b><br>
                     Durum: ${l.status}<br>
-                    <a class="btn" href="manage-listing.html?id=${l.listing_id}">Yönet</a>
+                    ${isPublicView ? `<a class="btn" href="offer.html?listing=${l.listing_id}">İlanı Gör</a>` : `<a class="btn" href="manage-listing.html?id=${l.listing_id}">Yönet</a>`}
                 </div>
             </div>
         `).join('');
     }
 
+    // Offers: only show when owner viewing their own profile
     const offerDiv = document.getElementById('incoming-offers'); //teklifler
-    if (data.offers.length === 0) offerDiv.innerHTML = '<p>Bekleyen teklif yok.</p>';
-    else {
-        offerDiv.innerHTML = data.offers.map(o => `
-            <div class="offer-box" style="border:1px solid #eee; padding:10px; margin-bottom:10px;">
-                <b>Kitap:</b> ${o.title}<br>
-                <b>Teklif Veren:</b> ${o.requester_name}<br>
-                <b>Fiyat:</b> ${o.price}₺ (${o.offer_type})<br>
-                <a class="btn" href="offer-detail.html?id=${o.offer_id}" style="margin-top:5px;">İncele</a>
-            </div>
-        `).join('');
+    if (isPublicView) {
+        if (offerDiv) offerDiv.innerHTML = '';
+    } else {
+        if (!Array.isArray(data.offers) || data.offers.length === 0) offerDiv.innerHTML = '<p>Bekleyen teklif yok.</p>';
+        else {
+            offerDiv.innerHTML = data.offers.map(o => `
+                <div class="offer-box" style="border:1px solid #eee; padding:10px; margin-bottom:10px;">
+                    <b>Kitap:</b> ${o.title}<br>
+                    <b>Teklif Veren:</b> ${ o.requester_id ? ('<a href="profile.html?user='+o.requester_id+'">'+o.requester_name+'</a>') : (o.requester_name || '-') }<br>
+                    <b>Fiyat:</b> ${o.price}₺ (${o.offer_type})<br>
+                    <a class="btn" href="offer-detail.html?id=${o.offer_id}" style="margin-top:5px;">İncele</a>
+                </div>
+            `).join('');
+        }
     }
-    loadAddresses(user.user_id); // adresler
-    loadUserReviews(user.user_id); // yorumlar
+
+    // Addresses: only load for owner viewing their own profile
+    if (!isPublicView && user && user.user_id) loadAddresses(user.user_id);
+
+    // Reviews: use generic loader
+    const targetUserId = data.user.user_id;
+    loadUserReviews(targetUserId);
 }
 
 async function loadUserReviews(userId) { // bir kişinin aldığı yorumlar
@@ -227,7 +272,7 @@ async function loadUserReviews(userId) { // bir kişinin aldığı yorumlar
         <div class="review-box" style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <b>${r.reviewer_name}</b><br>
+                    <b>${ r.reviewer_id ? ('<a href="profile.html?user='+r.reviewer_id+'">'+r.reviewer_name+'</a>') : (r.reviewer_name || '-') }</b><br>
                     <span style="color:#888; font-size:12px;">${new Date(r.comment_date).toLocaleDateString('tr-TR')}</span>
                 </div>
                 <div style="font-size:18px;">⭐ ${r.point}</div>
@@ -308,7 +353,7 @@ async function setupOfferDetailPage(user) {
     const container = document.getElementById('offer-detail-container');
     container.innerHTML = `
         <p><b>Kitap:</b> ${offer.title || 'Bilinmiyor'}</p>
-        <p><b>Teklif Veren:</b> ${offer.requester_name}</p>
+        <p><b>Teklif Veren:</b> ${ offer.requester_id ? ('<a href="profile.html?user='+offer.requester_id+'">'+offer.requester_name+'</a>') : (offer.requester_name || 'Bilinmiyor') }</p>
         <p><b>Tutar:</b> ${offer.price}₺</p>
         <p><b>Tip:</b> ${offer.offer_type}</p>
         <p><b>Ödeme:</b> ${offer.payment_type}</p>
@@ -503,17 +548,17 @@ async function setupLeaveReviewPage(user) {
     const offerId = params.get('offer');
     const listingId = params.get('listing');
     const bookDefId = params.get('book_def');
-    const sellerId = params.get('seller');
+    let sellerId = params.get('seller');
 
     // Prefill title and seller display
     let title = null;
     let sellerName = null;
     if (listingId) {
         const listing = await apiFetch(`/api/listings/${listingId}`);
-        if (listing) { title = listing.title; sellerName = listing.user_name; }
+        if (listing) { title = listing.title; sellerName = listing.user_name; sellerId = listing.owner_user_id || sellerId; }
     } else if (offerId) {
         const offer = await apiFetch(`/api/offers/${offerId}`);
-        if (offer) { title = offer.title; sellerName = offer.requester_name; }
+        if (offer) { title = offer.title; sellerName = offer.requester_name; sellerId = offer.requester_id || sellerId; }
     } else if (bookDefId) {
         const cat = await apiFetch(`/api/catalog?book_def_id=${bookDefId}`);
         if (Array.isArray(cat) && cat.length) title = cat[0].title;
@@ -526,7 +571,10 @@ async function setupLeaveReviewPage(user) {
     }
     if (sellerName) {
         const p = document.querySelector('.item p b');
-        if (p) p.innerText = sellerName;
+        if (p) {
+            if (sellerId) p.parentElement.innerHTML = `<b><a href="profile.html?user=${sellerId}">${sellerName}</a></b>`;
+            else p.innerText = sellerName;
+        }
     }
 
     // If user already left a review for this listing/book, prefill form (we overwrite previous)
@@ -588,7 +636,11 @@ async function setupManageListingPage(user) { //listing yönetimi
 
     document.getElementById('listing-title').innerText = listing.title || 'Bilinmiyor';
     document.getElementById('listing-condition').innerText = listing.condition || '-';
-    document.getElementById('listing-seller').innerText = listing.user_name || '-';
+    const sellerElem = document.getElementById('listing-seller');
+    if (sellerElem) {
+        if (listing.owner_user_id) sellerElem.innerHTML = `<a href="profile.html?user=${listing.owner_user_id}">${listing.user_name || '-'}</a>`;
+        else sellerElem.innerText = listing.user_name || '-';
+    }
     document.getElementById('listing-price').innerText = listing.price ? (listing.price + '₺') : '-';
 
     document.getElementById('manage-desc').value = listing.explanation || '';
@@ -601,7 +653,7 @@ async function setupManageListingPage(user) { //listing yönetimi
     else {
         offersDiv.innerHTML = offers.map(o => `
             <div class="offer-box">
-                <p><b>${o.requester_name}</b> — ${o.price}₺ teklif verdi</p>
+                <p>${ o.requester_id ? ('<b><a href="profile.html?user='+o.requester_id+'">'+o.requester_name+'</a></b>') : ('<b>'+(o.requester_name||'-')+'</b>') } — ${o.price}₺ teklif verdi</p>
                 <p>Tür: ${o.offer_type || '-'}</p>
                 <p>Tarih: ${new Date(o.offer_date).toLocaleDateString()}</p>
                 <a class="btn" href="offer-detail.html?id=${o.offer_id}">Teklifi Gör</a>
