@@ -211,6 +211,31 @@ async function loadProfile(user) { //profil
         `).join('');
     }
     loadAddresses(user.user_id); // adresler
+    loadUserReviews(user.user_id); // yorumlar
+}
+
+async function loadUserReviews(userId) { // bir kişinin aldığı yorumlar
+    const reviews = await apiFetch(`/api/user/${userId}/reviews`);
+    const reviewDiv = document.getElementById('reviews-container');
+    
+    if (!Array.isArray(reviews) || reviews.length === 0) {
+        reviewDiv.innerHTML = '<p>Henüz yorum yok.</p>';
+        return;
+    }
+    
+    reviewDiv.innerHTML = reviews.map(r => `
+        <div class="review-box" style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <b>${r.reviewer_name}</b><br>
+                    <span style="color:#888; font-size:12px;">${new Date(r.comment_date).toLocaleDateString('tr-TR')}</span>
+                </div>
+                <div style="font-size:18px;">⭐ ${r.point}</div>
+            </div>
+            ${r.book_title ? `<p style="color:#666; margin:5px 0;"><b>Kitap:</b> ${r.book_title}</p>` : ''}
+            ${r.comment ? `<p style="margin:10px 0; background:#f9f9f9; padding:8px; border-left:3px solid #007bff;">${r.comment}</p>` : ''}
+        </div>
+    `).join('');
 }
 
 async function setupAddListingPage(user) { // yeni ilan ekleme

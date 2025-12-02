@@ -13,9 +13,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const pool = mysql.createPool({
     host: 'localhost',
-    port: 3006,
+    port: 3306,
     user: 'root',
-    password: 'Bou0tmF5!',
+    password: 'Allah123!',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -514,6 +514,25 @@ app.get('/api/reviews', async (req, res) => {
             return res.json(results);
         }
         const [results] = await pool.query('SELECT * FROM reviews ORDER BY comment_date DESC LIMIT 100');
+        res.json(results);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
+
+app.get('/api/user/:id/reviews', async (req, res) => { // bir kişinin aldığı yorumlar
+    try {
+        const userId = req.params.id;
+        const sql = `
+            SELECT r.*, u.user_name as reviewer_name, bd.title as book_title, l.listing_id
+            FROM reviews r
+            JOIN users u ON r.degerlendiren_kullanici_id = u.user_id
+            LEFT JOIN book_definitions bd ON r.book_def_id = bd.book_def_id
+            LEFT JOIN listings l ON r.listing_id = l.listing_id
+            WHERE r.degerlendirilen_kullanici_id = ?
+            ORDER BY r.comment_date DESC
+        `;
+        const [results] = await pool.query(sql, [userId]);
         res.json(results);
     } catch (err) {
         res.status(500).json(err);
