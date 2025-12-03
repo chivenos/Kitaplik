@@ -15,7 +15,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     port: 3306,
     user: 'root',
-    password: 'Allah123!',
+    password: 'kakamgeldi3169',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,

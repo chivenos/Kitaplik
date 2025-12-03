@@ -168,8 +168,33 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
     const cancelBtn = document.getElementById('cancelEditProfileBtn');
 
     if (isPublicView) {
-        if (editBtn) editBtn.style.display = 'none';
-        if (editForm) editForm.style.display = 'none';
+
+    // Profil düzenleme
+    document.getElementById('editProfileBtn')?.remove();
+    document.getElementById('edit-profile-form')?.remove();
+
+    // Siparişler / Bildirimler
+    document.getElementById('btn-orders')?.remove();
+    document.getElementById('btn-notifications')?.remove();
+
+    // Adreslerim bölümü
+    document.getElementById('section-addresses')?.remove();
+
+            // Başkasının profilindeysek:
+        // "Yeni İlan Ekle +" butonunu gizle
+        document.getElementById('btn-add-listing')?.remove();
+
+        // Listelenen ilanlarda "Yönet" butonunu gizle
+        document.querySelectorAll('#my-listings a.btn').forEach(btn => {
+            if (btn.innerText.trim().toLowerCase() === 'yönet') {
+                btn.remove();
+            }
+        });
+
+    // Bana gelen teklifler
+    document.getElementById('section-incoming-offers')?.remove();
+
+        
     } else {
         if (editBtn && editForm) {
             editBtn.onclick = (e) => {
@@ -227,7 +252,7 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
                 <div>
                     <b>${l.title}</b><br>
                     Durum: ${l.status}<br>
-                    ${isPublicView ? `<a class="btn" href="offer.html?listing=${l.listing_id}">İlanı Gör</a>` : `<a class="btn" href="manage-listing.html?id=${l.listing_id}">Yönet</a>`}
+                    ${isPublicView ? `<a class="btn" href="offer.html?listing=${l.listing_id}">Teklif Ver</a>` : `<a class="btn" href="manage-listing.html?id=${l.listing_id}">Yönet</a>`}
                 </div>
             </div>
         `).join('');
@@ -407,7 +432,10 @@ async function loadMyOrders(user) {
                 } catch (e) { console.warn('Could not fetch listing for seller fallback', e); }
             }
 
-            // Review button: show if completed and not already reviewed
+
+            // Hide review button for rejected transactions
+            const isRejected = status === 'Reddedildi';
+            // Review button: show if completed and not already reviewed and not rejected
             const completedStatuses = ['Tamamlandı','Kargolandı','Onaylandı'];
             const isCompleted = completedStatuses.includes(status) || status === 'İşlemde';
             let alreadyReviewed = false;
@@ -422,7 +450,7 @@ async function loadMyOrders(user) {
                 }
             } catch (e) { console.warn('Review check failed', e); }
 
-            const action = (isCompleted && !alreadyReviewed && sellerId) ? `<a class="btn" href="leave-review.html?offer=${o.offer_id}&listing=${o.listing_id || ''}&book_def=${o.book_def_id || ''}&seller=${sellerId}">Yorum Bırak</a>` : (alreadyReviewed ? '<small>Yorum yapıldı</small>' : '');
+            const action = (!isRejected && isCompleted && !alreadyReviewed && sellerId) ? `<a class="btn" href="leave-review.html?offer=${o.offer_id}&listing=${o.listing_id || ''}&book_def=${o.book_def_id || ''}&seller=${sellerId}">Yorum Bırak</a>` : (alreadyReviewed ? '<small>Yorum yapıldı</small>' : '');
 
             return `
                 <div class="process-card">
@@ -454,7 +482,9 @@ async function loadMyOrders(user) {
                 const buyerId = s.buyer_user_id || s.buyer_id || '';
                 const buyerName = s.buyer_name || s.buyer || '';
 
-                const action = (status === 'Tamamlandı' || status === 'Onaylandı' || (s.listing_status && s.listing_status === 'İşlemde'))
+                // Hide review button for rejected transactions
+                const isRejected = status === 'Reddedildi';
+                const action = (!isRejected && (status === 'Tamamlandı' || status === 'Onaylandı' || (s.listing_status && s.listing_status === 'İşlemde')))
                     ? `<a class="btn" href="leave-review.html?offer=${s.offer_id}&listing=${s.listing_id}&book_def=${s.book_def_id}&seller=${buyerId}">Alıcıyı Değerlendir</a>`
                     : '';
 

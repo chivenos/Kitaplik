@@ -25,17 +25,18 @@
 
     <h1>Profil</h1>
 
-    <div class="item">
+    <div class="item" id="section-user-info">
         <h2>Kullanıcı Bilgileri</h2>
+
         <p><b>Kullanıcı Adı:</b> <span id="profile-username">...</span></p>
         <p><b>Ad Soyad:</b> <span id="profile-name">...</span></p>
         <p><b>Satıcı Puanı:</b> ⭐ <span id="seller-rating">-</span></p>
         <p><b>Müşteri Puanı:</b> ⭐ <span id="customer-rating">-</span></p>
-        
+
         <div style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;">
-            <a class="btn " href="my-orders.html">Siparişlerim ve İşlemlerim</a>
-            <a class="btn" href="notifications.html" style="background:#555;">Bildirimler</a>
-            <a class="btn-primary" href="#" id="editProfileBtn">Profili Düzenle</a>
+            <a class="btn" id="btn-orders" href="my-orders.html">Siparişlerim ve İşlemlerim</a>
+            <a class="btn" id="btn-notifications" href="notifications.html" style="background:#555;">Bildirimler</a>
+            <a class="btn-primary" id="editProfileBtn" href="#">Profili Düzenle</a>
         </div>
 
         <div id="edit-profile-form" style="display:none; margin-top:15px; text-align:left;">
@@ -50,37 +51,42 @@
             <input id="edit-email" type="email">
             <label>Yeni Şifre (isteğe bağlı)</label>
             <input id="edit-password" type="password" placeholder="Yeni şifre girin">
+
             <div style="margin-top:10px; display:flex; gap:10px;">
-                <button id="saveProfileBtn" class="btn-primary ">Kaydet</button>
+                <button id="saveProfileBtn" class="btn-primary">Kaydet</button>
                 <button id="cancelEditProfileBtn" class="btn btn-gray">İptal</button>
             </div>
         </div>
     </div>
 
-    <div class="item">
+    <!-- ADRESLER -->
+    <div class="item" id="section-addresses">
         <h2>Adreslerim</h2>
         <div id="address-container">Adresler yükleniyor...</div>
         <br>
-        <a class="btn " href="edit-address.html"> Yeni Adres Ekle +</a>
+        <a class="btn" href="edit-address.html">Yeni Adres Ekle +</a>
     </div>
 
-    <div class="item">
+    <!-- AKTIF ILANLAR -->
+    <div class="item" id="section-listings">
         <h2>Aktif İlanlarım</h2>
         <div id="my-listings">
             <p>Henüz ilanınız yok.</p>
         </div>
         <br>
-        <a href="add-listing.html" class="btn ">Yeni İlan Ekle +</a>
+        <a href="add-listing.html" class="btn" id="btn-add-listing">Yeni İlan Ekle +</a>
     </div>
 
-    <div class="item">
+    <!-- BANA GELEN TEKLIFLER -->
+    <div class="item" id="section-incoming-offers">
         <h2>Bana Gelen Teklifler</h2>
         <div id="incoming-offers">
             <p>Bekleyen teklif yok.</p>
         </div>
     </div>
 
-    <div class="item">
+    <!-- BANA GELEN YORUMLAR -->
+    <div class="item" id="section-reviews">
         <h2>Bana Gelen Yorumlar</h2>
         <div id="reviews-container">
             <p>Henüz yorum yok.</p>
