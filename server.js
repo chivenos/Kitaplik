@@ -7,7 +7,7 @@ const app = express();
 const PORT = 3000;
 
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -137,7 +137,7 @@ app.post('/api/listings', async (req, res) => {  // create listing
 app.put('/api/listings/:id', async (req, res) => { // update listing
     try {
         const { condition, explanation, price } = req.body;
-        await pool.query('UPDATE listings SET `condition` = ?, explanation = ?, price = ? WHERE listing_id = ?', 
+        await pool.query('UPDATE listings SET `condition` = ?, explanation = ?, price = ? WHERE listing_id = ?',
             [condition, explanation, price, req.params.id]
         );
         res.json({ success: true });
@@ -146,7 +146,7 @@ app.put('/api/listings/:id', async (req, res) => { // update listing
     }
 });
 
-app.post('/api/listings/:id/status', async (req, res) => { 
+app.post('/api/listings/:id/status', async (req, res) => {
     try {
         const { status } = req.body;
         await pool.query('UPDATE listings SET status = ? WHERE listing_id = ?', [status, req.params.id]);
@@ -190,13 +190,13 @@ app.post('/api/offers', async (req, res) => {
 });
 
 app.post('/api/offers/:id/accept', async (req, res) => { //accept offer, while rejecting others 
-    const connection = await pool.getConnection(); 
+    const connection = await pool.getConnection();
     try {
         await connection.beginTransaction();
         const offerId = req.params.id;
         const [offers] = await connection.query('SELECT * FROM offers WHERE offer_id = ?', [offerId]);
         if (offers.length === 0) throw new Error('Offer not found');
-        
+
         const offer = offers[0];
         const listingId = offer.listing_id;
 
@@ -229,7 +229,7 @@ app.post('/api/offers/:id/reject', async (req, res) => {
     }
 });
 
-app.get('/api/offers/:id', async (req, res) => { 
+app.get('/api/offers/:id', async (req, res) => {
     try {
         const sql = `SELECT o.*, bd.title, u.user_name as requester_name, u.user_id as requester_id
                      FROM offers o 
@@ -258,9 +258,9 @@ app.post('/api/login', async (req, res) => {
     try {
         //hem email hem user_name 'email'le temsil ediliyp
         const { email, password } = req.body;
-        
+
         const sql = 'SELECT * FROM users WHERE email = ? OR user_name = ?';
-        const [users] = await pool.query(sql, [email, email]); 
+        const [users] = await pool.query(sql, [email, email]);
 
         if (users.length === 0) {
             return res.status(404).json({ success: false, errorType: 'USER_NOT_FOUND', message: 'Böyle bir hesap yok, lütfen kayıt olun.' });
@@ -391,7 +391,7 @@ app.put('/api/user/:id', async (req, res) => {
     }
 });
 
-app.get('/api/user/:id/orders', async (req, res) => { 
+app.get('/api/user/:id/orders', async (req, res) => {
     try {
         const sql = `
             SELECT o.offer_id, l.listing_id, bd.book_def_id, l.owner_user_id AS seller_user_id, bd.title AS book_title,o.status, o.offer_date AS process_date, o.price
@@ -414,11 +414,10 @@ app.get('/api/user/:id/orders', async (req, res) => {
         res.status(500).json(err);
     }
 });
-    // Satıcıya ait satışlar (my-orders için)
-    app.get('/api/user/:id/sales', async (req, res) => {
-        try {
-            const userId = req.params.id;
-            const sql = `
+app.get('/api/user/:id/sales', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const sql = `
                 SELECT o.offer_id, l.listing_id, bd.book_def_id, bd.title, o.status, o.offer_date as process_date, o.price, u.user_name as buyer_name, u.user_id as buyer_user_id
                 FROM offers o
                 JOIN listings l ON o.listing_id = l.listing_id
@@ -427,12 +426,12 @@ app.get('/api/user/:id/orders', async (req, res) => {
                 WHERE l.owner_user_id = ? AND o.status = 'Onaylandı' AND o.offer_type LIKE '%sat%'
                 ORDER BY o.offer_date DESC
             `;
-            const [results] = await pool.query(sql, [userId]);
-            res.json(results);
-        } catch (err) {
-            res.status(500).json(err);
-        }
-    });
+        const [results] = await pool.query(sql, [userId]);
+        res.json(results);
+    } catch (err) {
+        res.status(500).json(err);
+    }
+});
 
 app.post('/api/books', async (req, res) => { // book definitions
     try {
@@ -440,8 +439,8 @@ app.post('/api/books', async (req, res) => { // book definitions
         const getOrInsert = async (table, col, val) => {
             if (!val) return null;
             const [rows] = await pool.query(`SELECT * FROM ${table} WHERE ${col} = ? LIMIT 1`, [val]);
-            if (rows.length > 0) return rows[0][col.replace('_name', '_id')]; 
-            
+            if (rows.length > 0) return rows[0][col.replace('_name', '_id')];
+
             const [res] = await pool.query(`INSERT INTO ${table} (${col}) VALUES (?)`, [val]);
             return res.insertId;
         };
@@ -463,7 +462,7 @@ app.post('/api/books', async (req, res) => { // book definitions
 app.post('/api/addresses', async (req, res) => {  // adresler 
     try {
         const { user_id, county_id, adress_name, adress_detail } = req.body;
-        const [result] = await pool.query('INSERT INTO adresses (user_id, county_id, adress_name, adress_detail) VALUES (?, ?, ?, ?)', 
+        const [result] = await pool.query('INSERT INTO adresses (user_id, county_id, adress_name, adress_detail) VALUES (?, ?, ?, ?)',
             [user_id, county_id, adress_name, adress_detail]
         );
         res.json({ success: true, insertId: result.insertId });
@@ -495,7 +494,7 @@ app.get('/api/addresses/:id', async (req, res) => {
 app.put('/api/addresses/:id', async (req, res) => {
     try {
         const { county_id, adress_name, adress_detail } = req.body;
-        await pool.query('UPDATE adresses SET county_id = ?, adress_name = ?, adress_detail = ? WHERE adress_id = ?', 
+        await pool.query('UPDATE adresses SET county_id = ?, adress_name = ?, adress_detail = ? WHERE adress_id = ?',
             [county_id, adress_name, adress_detail, req.params.id]
         );
         res.json({ success: true });
@@ -517,8 +516,6 @@ app.delete('/api/addresses/:id', async (req, res) => {
 app.post('/api/reviews', async (req, res) => {
     try {
         const { book_def_id, listing_id, degerlendiren_kullanici_id, degerlendirilen_kullanici_id, point, comment } = req.body;
-
-        // First, check if this reviewer already left a review for this listing or book
         let existing = [];
         if (listing_id) {
             const [rows] = await pool.query('SELECT * FROM reviews WHERE listing_id = ? AND degerlendiren_kullanici_id = ? LIMIT 1', [listing_id, degerlendiren_kullanici_id]);
@@ -530,7 +527,6 @@ app.post('/api/reviews', async (req, res) => {
 
         let reviewId = null;
         if (existing && existing.length > 0) {
-            // Update existing review (user edits their previous review)
             const rev = existing[0];
             await pool.query('UPDATE reviews SET point = ?, `comment` = ?, comment_date = NOW() WHERE review_id = ?', [point, comment || null, rev.review_id]);
             reviewId = rev.review_id;
@@ -540,7 +536,6 @@ app.post('/api/reviews', async (req, res) => {
             reviewId = result.insertId;
         }
 
-        // Recalculate aggregates
         if (book_def_id) { // update book rating
             const [rows] = await pool.query('SELECT AVG(point) AS avgp FROM reviews WHERE book_def_id = ?', [book_def_id]);
             if (rows.length > 0) await pool.query('UPDATE book_definitions SET general_rating = ? WHERE book_def_id = ?', [rows[0].avgp || 0, book_def_id]);
@@ -592,7 +587,7 @@ app.get('/api/user/:id/reviews', async (req, res) => { // bir kişinin aldığı
         `;
         const [results] = await pool.query(sql, [userId]);
         // Her satıra role: 'seller' ekle
-        const withRole = results.map(r => ({...r, role: 'seller'}));
+        const withRole = results.map(r => ({ ...r, role: 'seller' }));
         res.json(withRole);
     } catch (err) {
         res.status(500).json(err);

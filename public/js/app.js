@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     else if (path.includes('offer-detail.html')) setupOfferDetailPage(user);
     else if (path.includes('my-orders.html')) loadMyOrders(user);
     else if (path.includes('leave-review.html')) setupLeaveReviewPage(user);
-    
+
     if (document.getElementById('loginBtn')) document.getElementById('loginBtn').addEventListener('click', handleLogin);
     if (document.getElementById('registerBtn')) document.getElementById('registerBtn').addEventListener('click', handleRegister);
 });
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateNav(user) {
     const navDiv = document.querySelector('nav div:last-child') || document.getElementById('nav-links');
     if (!navDiv) return;
-    
+
     if (user) {
         navDiv.innerHTML = `
             <a href="index.html">Ana Sayfa</a>
@@ -48,7 +48,7 @@ async function apiFetch(url, options = {}) {
         const res = await fetch(url, options);
         if (!res.ok) {
             let errBody = null;
-            try { errBody = await res.json(); } catch (e) { errBody = await res.text().catch(()=>null); }
+            try { errBody = await res.json(); } catch (e) { errBody = await res.text().catch(() => null); }
             console.error('apiFetch non-OK', url, res.status, errBody);
             return null;
         }
@@ -71,7 +71,7 @@ async function loadCatalog() {
     const data = await apiFetch(url);
     const container = document.getElementById('catalog-container');
     if (!container) return;
-    
+
     if (!Array.isArray(data) || data.length === 0) {
         container.innerHTML = '<p>Katalogda sonuç bulunamadı.</p>';
         return;
@@ -105,11 +105,9 @@ async function loadListings() { //ilanlar
             url += `?q=${encodeURIComponent(q)}`;
         }
     }
-    // Append sort param from select if present
-    const sortVal = sortSelect ? sortSelect.value : null;
-    if (sortVal) {
-        url += (url.includes('?') ? '&' : '?') + `sort=${encodeURIComponent(sortVal)}`;
-    }
+
+    const sortVal = sortSelect ? sortSelect.value : null; // append sort param from select if present
+    if (sortVal) url += (url.includes('?') ? '&' : '?') + `sort=${encodeURIComponent(sortVal)}`;
     const data = await apiFetch(url);
     const container = document.getElementById('listings-container');
     if (!container) return;
@@ -119,8 +117,8 @@ async function loadListings() { //ilanlar
             <img src="img/book1.jpg">
             <div>
                 <b>${l.title}</b><br>
-                Satıcı: ${ l.seller_user_id ? ('<a href="profile.html?user='+l.seller_user_id+'">'+l.seller+'</a>') : (l.seller || '-') }<br>
-                Puan: ${l.general_rating !== undefined ? (Math.round(l.general_rating*10)/10) : '—'}<br>
+                Satıcı: ${l.seller_user_id ? ('<a href="profile.html?user=' + l.seller_user_id + '">' + l.seller + '</a>') : (l.seller || '-')}<br>
+                Puan: ${l.general_rating !== undefined ? (Math.round(l.general_rating * 10) / 10) : '—'}<br>
                 Durum: ${l.condition}<br>
                 Fiyat: ${l.price ? l.price + '₺' : '-'}<br>
                 <a href="offer.html?listing=${l.listing_id}">Teklif Ver</a>
@@ -137,7 +135,7 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
 
     if (publicUserId) {
         data = await apiFetch(`/api/user/${publicUserId}/public`);
-        // If public endpoint didn't return expected shape, try fallback to regular user endpoint
+        // if public endpoint didn't return expected shape, try fallback to regular user endpoint
         if (!data || !data.user) {
             console.warn('Public profile endpoint returned unexpected shape, trying fallback /api/user/:id', publicUserId, data);
             const fallback = await apiFetch(`/api/user/${publicUserId}`);
@@ -160,41 +158,20 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
     document.getElementById('profile-name').innerText = `${data.user.name || ''} ${data.user.surname || ''}`.trim();
     document.getElementById('seller-rating').innerText = data.user.seller_user_rating;
     document.getElementById('customer-rating').innerText = data.user.customer_user_rating || '-';
-
-    // Setup Edit Profile button and form (hide if public view)
     const editBtn = document.getElementById('editProfileBtn');
     const editForm = document.getElementById('edit-profile-form');
     const saveBtn = document.getElementById('saveProfileBtn');
     const cancelBtn = document.getElementById('cancelEditProfileBtn');
 
     if (isPublicView) {
-
-    // Profil düzenleme
-    document.getElementById('editProfileBtn')?.remove();
-    document.getElementById('edit-profile-form')?.remove();
-
-    // Siparişler / Bildirimler
-    document.getElementById('btn-orders')?.remove();
-    document.getElementById('btn-notifications')?.remove();
-
-    // Adreslerim bölümü
-    document.getElementById('section-addresses')?.remove();
-
-            // Başkasının profilindeysek:
-        // "Yeni İlan Ekle +" butonunu gizle
+        document.getElementById('editProfileBtn')?.remove();
+        document.getElementById('edit-profile-form')?.remove();
+        document.getElementById('btn-orders')?.remove();
+        document.getElementById('btn-notifications')?.remove();
+        document.getElementById('section-addresses')?.remove();
         document.getElementById('btn-add-listing')?.remove();
-
-        // Listelenen ilanlarda "Yönet" butonunu gizle
-        document.querySelectorAll('#my-listings a.btn').forEach(btn => {
-            if (btn.innerText.trim().toLowerCase() === 'yönet') {
-                btn.remove();
-            }
-        });
-
-    // Bana gelen teklifler
-    document.getElementById('section-incoming-offers')?.remove();
-
-        
+        document.querySelectorAll('#my-listings a.btn').forEach(btn => { if (btn.innerText.trim().toLowerCase() === 'yönet') btn.remove(); });
+        document.getElementById('section-incoming-offers')?.remove();
     } else {
         if (editBtn && editForm) {
             editBtn.onclick = (e) => {
@@ -222,7 +199,7 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
                 const pwd = document.getElementById('edit-password').value;
                 if (pwd && pwd.trim() !== '') body.password = pwd;
 
-                const res = await fetch(`/api/user/${data.user.user_id}`, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body) });
+                const res = await fetch(`/api/user/${data.user.user_id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 if (res.ok) {
                     alert('Profil güncellendi.');
                     const refreshed = await apiFetch(`/api/user/${user.user_id}`);
@@ -242,7 +219,7 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
         }
     }
 
-    // Listings
+    // listings
     const listDiv = document.getElementById('my-listings'); // ilanlar
     if (!Array.isArray(data.listings) || data.listings.length === 0) listDiv.innerHTML = `<p>${isPublicView ? 'Kullanıcının aktif ilanı yok.' : 'Aktif ilanınız yok.'}</p>`;
     else {
@@ -258,7 +235,6 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
         `).join('');
     }
 
-    // Offers: only show when owner viewing their own profile
     const offerDiv = document.getElementById('incoming-offers'); //teklifler
     if (isPublicView) {
         if (offerDiv) offerDiv.innerHTML = '';
@@ -268,18 +244,14 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
             offerDiv.innerHTML = data.offers.map(o => `
                 <div class="offer-box" style="border:1px solid #eee; padding:10px; margin-bottom:10px;">
                     <b>Kitap:</b> ${o.title}<br>
-                    <b>Teklif Veren:</b> ${ o.requester_id ? ('<a href="profile.html?user='+o.requester_id+'">'+o.requester_name+'</a>') : (o.requester_name || '-') }<br>
+                    <b>Teklif Veren:</b> ${o.requester_id ? ('<a href="profile.html?user=' + o.requester_id + '">' + o.requester_name + '</a>') : (o.requester_name || '-')}<br>
                     <b>Fiyat:</b> ${o.price}₺ (${o.offer_type})<br>
                     <a class="btn" href="offer-detail.html?id=${o.offer_id}" style="margin-top:5px;">İncele</a>
                 </div>
             `).join('');
         }
     }
-
-    // Addresses: only load for owner viewing their own profile
     if (!isPublicView && user && user.user_id) loadAddresses(user.user_id);
-
-    // Reviews: use generic loader
     const targetUserId = data.user.user_id;
     loadUserReviews(targetUserId);
 }
@@ -287,17 +259,17 @@ async function loadProfile(user) { // profil (supports public view via ?user=<id
 async function loadUserReviews(userId) { // bir kişinin aldığı yorumlar
     const reviews = await apiFetch(`/api/user/${userId}/reviews`);
     const reviewDiv = document.getElementById('reviews-container');
-    
+
     if (!Array.isArray(reviews) || reviews.length === 0) {
         reviewDiv.innerHTML = '<p>Henüz yorum yok.</p>';
         return;
     }
-    
+
     reviewDiv.innerHTML = reviews.map(r => `
         <div class="review-box" style="border:1px solid #ddd; padding:10px; margin-bottom:10px; border-radius:5px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <b>${ r.reviewer_id ? ('<a href="profile.html?user='+r.reviewer_id+'">'+r.reviewer_name+'</a>') : (r.reviewer_name || '-') }</b><br>
+                    <b>${r.reviewer_id ? ('<a href="profile.html?user=' + r.reviewer_id + '">' + r.reviewer_name + '</a>') : (r.reviewer_name || '-')}</b><br>
                     <span style="color:#888; font-size:12px;">${new Date(r.comment_date).toLocaleDateString('tr-TR')}</span>
                 </div>
                 <div style="font-size:18px;">⭐ ${r.point}</div>
@@ -310,15 +282,15 @@ async function loadUserReviews(userId) { // bir kişinin aldığı yorumlar
 
 async function setupAddListingPage(user) { // yeni ilan ekleme
     if (!user) return window.location.href = 'login.html';
-    
-    const books = await apiFetch('/api/catalog'); // Catalog endpointi tüm kitapları döner
+
+    const books = await apiFetch('/api/catalog'); // katalog endpointi tüm kitapları döner
     const select = document.getElementById('bookSelect');
-    
+
     const validBooks = books.filter(b => b.book_def_id !== null && b.book_def_id !== undefined && b.book_def_id !== '');
-    
+
     if (validBooks.length > 0) select.innerHTML = '<option value="">-- Kitap Seçin --</option>' + validBooks.map(b => `<option value="${b.book_def_id}">${b.title} (${b.author_name || 'Yazar Bilinmiyor'})</option>`).join('');
     else select.innerHTML = '<option value="">Katalogda hiç kitap bulunmuyor.</option>';
-    
+
     document.getElementById('addListingBtn').onclick = async () => {
         const body = {
             owner_user_id: user.user_id,
@@ -332,15 +304,15 @@ async function setupAddListingPage(user) { // yeni ilan ekleme
             alert('Lütfen bir kitap seçiniz.');
             return;
         }
-        
+
         const res = await fetch('/api/listings', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
-        
-        if (res.ok) { 
-            alert('İlan başarıyla eklendi!'); 
+
+        if (res.ok) {
+            alert('İlan başarıyla eklendi!');
             window.location.href = 'profile.html';
         } else {
             const err = await res.json();
@@ -362,7 +334,7 @@ function setupAddBookDefPage(user) { // yeni kitap tanımlama
 
         const res = await fetch('/api/books', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
 
@@ -374,11 +346,11 @@ async function setupOfferDetailPage(user) {
     const params = new URLSearchParams(window.location.search);
     const offerId = params.get('id');
     const offer = await apiFetch(`/api/offers/${offerId}`); // teklif detayını çek (Server.js'de /api/offers/:id olmalı)
-    
+
     const container = document.getElementById('offer-detail-container');
     container.innerHTML = `
         <p><b>Kitap:</b> ${offer.title || 'Bilinmiyor'}</p>
-        <p><b>Teklif Veren:</b> ${ offer.requester_id ? ('<a href="profile.html?user='+offer.requester_id+'">'+offer.requester_name+'</a>') : (offer.requester_name || 'Bilinmiyor') }</p>
+        <p><b>Teklif Veren:</b> ${offer.requester_id ? ('<a href="profile.html?user=' + offer.requester_id + '">' + offer.requester_name + '</a>') : (offer.requester_name || 'Bilinmiyor')}</p>
         <p><b>Tutar:</b> ${offer.price}₺</p>
         <p><b>Tip:</b> ${offer.offer_type}</p>
         <p><b>Ödeme:</b> ${offer.payment_type}</p>
@@ -392,7 +364,7 @@ async function setupOfferDetailPage(user) {
         alert('Teklif kabul edildi!');
         window.location.href = 'profile.html';
     };
-    
+
     document.getElementById('rejectOfferBtn').onclick = async () => {
         await fetch(`/api/offers/${offerId}/reject`, { method: 'POST' });
         alert('Teklif reddedildi.');
@@ -402,13 +374,9 @@ async function setupOfferDetailPage(user) {
 
 async function loadMyOrders(user) {
     if (!user) return;
-
-    // Fetch unified orders and split into purchases (role=buyer) and sales (role=seller)
     const orders = await apiFetch(`/api/user/${user.user_id}/orders`);
     const purchasesContainer = document.getElementById('my-orders-container');
     const salesContainer = document.getElementById('my-sales-container');
-
-    // Render purchases (where current user is the buyer)
     const purchases = Array.isArray(orders) ? orders.filter(o => o.role === 'buyer') : [];
     if (!purchases || purchases.length === 0) {
         if (purchasesContainer) purchasesContainer.innerHTML = '<p>Herhangi bir satın alma/kiralama işlemin yok.</p>';
@@ -418,8 +386,6 @@ async function loadMyOrders(user) {
             const date = o.process_date ? new Date(o.process_date).toLocaleDateString() : '';
             const status = o.status || '';
             const price = o.price != null ? (o.price + '₺') : '-';
-
-            // Seller info: prefer counterparty from orders; fallback to listing owner
             let sellerName = o.counterparty || '';
             let sellerId = o.counterparty_user_id || '';
             if ((!sellerName || sellerName === '') && o.listing_id) {
@@ -431,12 +397,8 @@ async function loadMyOrders(user) {
                     }
                 } catch (e) { console.warn('Could not fetch listing for seller fallback', e); }
             }
-
-
-            // Hide review button for rejected transactions
             const isRejected = status === 'Reddedildi';
-            // Review button: show if completed and not already reviewed and not rejected
-            const completedStatuses = ['Tamamlandı','Kargolandı','Onaylandı'];
+            const completedStatuses = ['Tamamlandı', 'Kargolandı', 'Onaylandı'];
             const isCompleted = completedStatuses.includes(status) || status === 'İşlemde';
             let alreadyReviewed = false;
             try {
@@ -455,7 +417,7 @@ async function loadMyOrders(user) {
             return `
                 <div class="process-card">
                     <b>${book}</b><br>
-                    Satıcı: ${ sellerId ? `<a href="profile.html?user=${sellerId}">${sellerName || sellerId}</a>` : (sellerName || '—') }<br>
+                    Satıcı: ${sellerId ? `<a href="profile.html?user=${sellerId}">${sellerName || sellerId}</a>` : (sellerName || '—')}<br>
                     Durum: <span class="status-badge">${status}</span><br>
                     Tarih: ${date}<br>
                     Fiyat: ${price}<br>
@@ -467,12 +429,10 @@ async function loadMyOrders(user) {
         if (purchasesContainer) purchasesContainer.innerHTML = pieces.join('');
     }
 
-    // Render sales (where current user is the seller). Use /sales endpoint for completed-friendly data
     try {
         const sales = await apiFetch(`/api/user/${user.user_id}/sales`);
-        if (!salesContainer) {
-            // nothing to show
-        } else if (!sales || sales.length === 0) {
+        if (!salesContainer) {} 
+        else if (!sales || sales.length === 0) {
             salesContainer.innerHTML = '<p>Henüz tamamlanan bir satışın yok.</p>';
         } else {
             const salePieces = sales.map(s => {
@@ -481,8 +441,6 @@ async function loadMyOrders(user) {
                 const status = s.status || '';
                 const buyerId = s.buyer_user_id || s.buyer_id || '';
                 const buyerName = s.buyer_name || s.buyer || '';
-
-                // Sadece 'Onaylandı' statüsünde göster
                 const action = (status === 'Onaylandı')
                     ? `<a class="btn" href="leave-review.html?offer=${s.offer_id}&listing=${s.listing_id}&book_def=${s.book_def_id}&seller=${buyerId}">Alıcıyı Değerlendir</a>`
                     : '';
@@ -490,7 +448,7 @@ async function loadMyOrders(user) {
                 return `
                     <div class="process-card">
                         <b>${book}</b><br>
-                        Alıcı: ${ buyerId ? `<a href="profile.html?user=${buyerId}">${buyerName || buyerId}</a>` : (buyerName || '—') }<br>
+                        Alıcı: ${buyerId ? `<a href="profile.html?user=${buyerId}">${buyerName || buyerId}</a>` : (buyerName || '—')}<br>
                         Durum: <span class="status-badge">${status}</span><br>
                         Tarih: ${date}<br>
                         ${action}
@@ -507,7 +465,7 @@ async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    
+
     //eski msji sil
     const existingError = document.getElementById('login-error-msg');
     if (existingError) existingError.remove();
@@ -515,10 +473,10 @@ async function handleLogin(e) {
     try {
         const res = await fetch('/api/login', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({email, password})
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
         });
-        
+
         const result = await res.json();
 
         if (result.success) {
@@ -541,7 +499,7 @@ async function handleLogin(e) {
                 errorP.innerText = 'Giriş hatası oluştu.';
             }
             const loginBtn = document.getElementById('loginBtn');
-            if(loginBtn) {
+            if (loginBtn) {
                 loginBtn.parentNode.insertBefore(errorP, loginBtn.nextSibling);
             }
         }
@@ -562,7 +520,7 @@ async function handleRegister(e) {
     };
     const res = await fetch('/api/register', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
     });
     if (res.ok) {
@@ -576,7 +534,7 @@ async function handleRegister(e) {
     }
 }
 
-async function setupOfferPage(user) { 
+async function setupOfferPage(user) {
     if (!user) { alert('Giriş yapmalısın!'); window.location.href = 'login.html'; return; }
 
     const offerTypeSelect = document.getElementById('offerType');
@@ -584,24 +542,24 @@ async function setupOfferPage(user) {
     const durationInput = document.getElementById('lendingDuration');
 
     function toggleDurationField() {
-    const val = offerTypeSelect.value;
-    
-    if (val === 'Kiralama' || val === 'Ödünç') {
-        durationWrapper.style.display = 'block';
-    } else {
-        durationWrapper.style.display = 'none';
-        durationInput.value = ''; 
-    }
+        const val = offerTypeSelect.value;
+
+        if (val === 'Kiralama' || val === 'Ödünç') {
+            durationWrapper.style.display = 'block';
+        } else {
+            durationWrapper.style.display = 'none';
+            durationInput.value = '';
+        }
     }
 
     offerTypeSelect.addEventListener('change', toggleDurationField);
-    
+
     toggleDurationField();
 
     const params = new URLSearchParams(window.location.search);
     const listingId = params.get('listing');
     const listing = await apiFetch(`/api/listings/${listingId}`);
-    
+
     document.getElementById('summary-book').innerText = listing.title;
     document.getElementById('summary-seller').innerText = listing.user_name;
     const sellerRatingElem = document.getElementById('summary-seller-rating');
@@ -624,16 +582,16 @@ async function setupOfferPage(user) {
         };
 
         if (listing.owner_user_id && parseInt(listing.owner_user_id) === parseInt(user.user_id)) {
-            
+
             const errorDiv = document.createElement('div');
             errorDiv.id = 'offer-error-box';
-            errorDiv.innerText = 'Kendi ilanınıza teklif veremezsiniz!'; 
-            
+            errorDiv.innerText = 'Kendi ilanınıza teklif veremezsiniz!';
+
             //krmizi cerceve ve yazi stili ekleniyo
             Object.assign(errorDiv.style, {
-                color: '#721c24',              // Koyu kırmızı yazı
-                backgroundColor: '#f8d7da',    // Açık kırmızı arka plan (daha okunaklı olması için)
-                border: '1px solid #f5c6cb',   // Kırmızı çerçeve
+                color: '#721c24',              
+                backgroundColor: '#f8d7da',    
+                border: '1px solid #f5c6cb',   
                 padding: '10px',
                 marginTop: '10px',
                 borderRadius: '5px',
@@ -642,7 +600,7 @@ async function setupOfferPage(user) {
             });
 
             const btn = document.getElementById('submitOfferBtn');
-            if(document.getElementById('offerPrice').value === '') {
+            if (document.getElementById('offerPrice').value === '') {
                 errorDiv.innerText = 'Lütfen teklif tutarını giriniz!';
             }
             if (btn && btn.parentNode) {
@@ -653,12 +611,12 @@ async function setupOfferPage(user) {
 
         const res = await fetch('/api/offers', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
-        
+
         if (res.ok) {
-            alert('Teklif gönderildi!'); 
+            alert('Teklif gönderildi!');
             window.location.href = 'profile.html';
         } else {
             try {
@@ -673,25 +631,19 @@ async function setupOfferPage(user) {
 
 async function setupLeaveReviewPage(user) {
     if (!user) return window.location.href = 'login.html';
-    // Read params passed from my-orders/ sales: offer, listing, book_def, seller (or target_user_id)
     const params = new URLSearchParams(window.location.search);
     const offerId = params.get('offer');
     const listingId = params.get('listing');
     const bookDefId = params.get('book_def');
     let targetUserId = params.get('target_user_id') || params.get('seller') || params.get('target');
-
-    // Prefill title and target display name
     let title = null;
     let targetName = null;
 
-    // Get title from listing or offer or book_def
     if (listingId) {
         const listing = await apiFetch(`/api/listings/${listingId}`);
         if (listing) {
             title = listing.title;
-            // If no explicit target passed, default target to listing owner
             if (!targetUserId) targetUserId = listing.owner_user_id;
-            // don't set targetName here; we'll prefer fetching user info below when possible
         }
     } else if (offerId) {
         const offer = await apiFetch(`/api/offers/${offerId}`);
@@ -704,7 +656,6 @@ async function setupLeaveReviewPage(user) {
         if (Array.isArray(cat) && cat.length) title = cat[0].title;
     }
 
-    // If we have a targetUserId, fetch the user's display name
     if (targetUserId) {
         try {
             const userInfo = await apiFetch(`/api/user/${targetUserId}`);
@@ -729,7 +680,6 @@ async function setupLeaveReviewPage(user) {
         }
     }
 
-    // Fill hidden inputs if present
     const hidOrder = document.getElementById('review-order-id');
     const hidListing = document.getElementById('review-listing-id');
     const hidBook = document.getElementById('review-bookdef-id');
@@ -739,7 +689,6 @@ async function setupLeaveReviewPage(user) {
     if (hidBook) hidBook.value = bookDefId || '';
     if (hidTarget) hidTarget.value = targetUserId || '';
 
-    // If user already left a review for this (by same reviewer -> same listing/book and same target), prefill
     try {
         let existingReview = null;
         if (listingId && targetUserId) {
@@ -776,7 +725,7 @@ async function setupLeaveReviewPage(user) {
 
         const res = await fetch('/api/reviews', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
         if (res.ok) { alert('Teşekkürler — değerlendirme kaydedildi.'); window.location.href = 'profile.html'; }
@@ -814,7 +763,7 @@ async function setupManageListingPage(user) { //listing yönetimi
     else {
         offersDiv.innerHTML = offers.map(o => `
             <div class="offer-box">
-                <p>${ o.requester_id ? ('<b><a href="profile.html?user='+o.requester_id+'">'+o.requester_name+'</a></b>') : ('<b>'+(o.requester_name||'-')+'</b>') } — ${o.price}₺ teklif verdi</p>
+                <p>${o.requester_id ? ('<b><a href="profile.html?user=' + o.requester_id + '">' + o.requester_name + '</a></b>') : ('<b>' + (o.requester_name || '-') + '</b>')} — ${o.price}₺ teklif verdi</p>
                 <p>Tür: ${o.offer_type || '-'}</p>
                 <p>Tarih: ${new Date(o.offer_date).toLocaleDateString()}</p>
                 <a class="btn" href="offer-detail.html?id=${o.offer_id}">Teklifi Gör</a>
@@ -830,7 +779,7 @@ async function setupManageListingPage(user) { //listing yönetimi
         };
         const res = await fetch(`/api/listings/${id}`, {
             method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
         if (res.ok) { alert('İlan güncellendi.'); window.location.reload(); }
@@ -839,7 +788,7 @@ async function setupManageListingPage(user) { //listing yönetimi
 
     document.getElementById('toggleStatusBtn').onclick = async () => { // durum değiştir
         const newStatus = listing.status === 'Yayinda' ? 'Pasif' : 'Yayinda';
-        await fetch(`/api/listings/${id}/status`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({status: newStatus}) });
+        await fetch(`/api/listings/${id}/status`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: newStatus }) });
         alert('Durum değiştirildi.'); window.location.reload();
     };
 
