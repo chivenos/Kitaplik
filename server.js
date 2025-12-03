@@ -13,9 +13,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const pool = mysql.createPool({
     host: 'localhost',
-    port: 3006,
+    port: 3306,
     user: 'root',
-    password: 'Bou0tmF5!',
+    password: 'Allah123!',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -24,7 +24,7 @@ const pool = mysql.createPool({
 
 (async () => {
     try {
-        const connection = await pool.getConnection();
+        const connection = await pool.getConnection();  
         console.log('MySQL Veritabanına Başarıyla Bağlandı!');
         connection.release();
     } catch (err) {
@@ -407,6 +407,7 @@ app.get('/api/user/:id/orders', async (req, res) => {
         res.status(500).json(err);
     }
 });
+
 
 app.post('/api/books', async (req, res) => { // book definitions
     try {

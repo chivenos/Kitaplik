@@ -375,24 +375,105 @@ async function setupOfferDetailPage(user) {
     };
 }
 
-async function loadMyOrders(user) { // sipraisler
-    if (!user) return;    
-    const orders = await apiFetch(`/api/user/${user.user_id}/orders`); 
-    const container = document.getElementById('my-orders-container');
-    
-    if (orders.length === 0) container.innerHTML = 'İşlem geçmişiniz boş.';
-    else {
-        container.innerHTML = orders.map(o => `
-            <div class="process-card">
-                <b>${o.title}</b><br>
-                Durum: <span class="status-badge">${o.status}</span><br>
-                Tarih: ${new Date(o.process_date).toLocaleDateString()}<br>
-                ${ (o.status === 'Tamamlandı' || o.status === 'Kargolandı' || o.status === 'Onaylandı') ? `<a class="btn" href="leave-review.html?offer=${o.offer_id}&listing=${o.listing_id}&book_def=${o.book_def_id}&seller=${o.seller_user_id}">Yorum Bırak</a>` : '' }
-            </div>
-        `).join('');
+async function loadMyOrders(user) {
+    if (!user) return;
+
+    // Fetch unified orders and split into purchases (role=buyer) and sales (role=seller)
+    const orders = await apiFetch(`/api/user/${user.user_id}/orders`);
+    const purchasesContainer = document.getElementById('my-orders-container');
+    const salesContainer = document.getElementById('my-sales-container');
+
+    // Render purchases (where current user is the buyer)
+    const purchases = Array.isArray(orders) ? orders.filter(o => o.role === 'buyer') : [];
+    if (!purchases || purchases.length === 0) {
+        if (purchasesContainer) purchasesContainer.innerHTML = '<p>Herhangi bir satın alma/kiralama işlemin yok.</p>';
+    } else {
+        const pieces = await Promise.all(purchases.map(async o => {
+            const book = o.book_title || '—';
+            const date = o.process_date ? new Date(o.process_date).toLocaleDateString() : '';
+            const status = o.status || '';
+            const price = o.price != null ? (o.price + '₺') : '-';
+
+            // Seller info: prefer counterparty from orders; fallback to listing owner
+            let sellerName = o.counterparty || '';
+            let sellerId = o.counterparty_user_id || '';
+            if ((!sellerName || sellerName === '') && o.listing_id) {
+                try {
+                    const listing = await apiFetch(`/api/listings/${o.listing_id}`);
+                    if (listing) {
+                        sellerName = listing.user_name || sellerName;
+                        sellerId = listing.owner_user_id || sellerId;
+                    }
+                } catch (e) { console.warn('Could not fetch listing for seller fallback', e); }
+            }
+
+            // Review button: show if completed and not already reviewed
+            const completedStatuses = ['Tamamlandı','Kargolandı','Onaylandı'];
+            const isCompleted = completedStatuses.includes(status) || status === 'İşlemde';
+            let alreadyReviewed = false;
+            try {
+                if (o.listing_id) {
+                    const reviews = await apiFetch(`/api/reviews?listing_id=${o.listing_id}`);
+                    if (Array.isArray(reviews)) alreadyReviewed = reviews.some(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id) && parseInt(r.degerlendirilen_kullanici_id) === parseInt(sellerId));
+                }
+                if (!alreadyReviewed && o.book_def_id) {
+                    const reviews2 = await apiFetch(`/api/reviews?book_def_id=${o.book_def_id}`);
+                    if (Array.isArray(reviews2)) alreadyReviewed = reviews2.some(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id) && parseInt(r.degerlendirilen_kullanici_id) === parseInt(sellerId) && !r.listing_id);
+                }
+            } catch (e) { console.warn('Review check failed', e); }
+
+            const action = (isCompleted && !alreadyReviewed && sellerId) ? `<a class="btn" href="leave-review.html?offer=${o.offer_id}&listing=${o.listing_id || ''}&book_def=${o.book_def_id || ''}&seller=${sellerId}">Yorum Bırak</a>` : (alreadyReviewed ? '<small>Yorum yapıldı</small>' : '');
+
+            return `
+                <div class="process-card">
+                    <b>${book}</b><br>
+                    Satıcı: ${ sellerId ? `<a href="profile.html?user=${sellerId}">${sellerName || sellerId}</a>` : (sellerName || '—') }<br>
+                    Durum: <span class="status-badge">${status}</span><br>
+                    Tarih: ${date}<br>
+                    Fiyat: ${price}<br>
+                    ${action}
+                </div>
+            `;
+        }));
+
+        if (purchasesContainer) purchasesContainer.innerHTML = pieces.join('');
+    }
+
+    // Render sales (where current user is the seller). Use /sales endpoint for completed-friendly data
+    try {
+        const sales = await apiFetch(`/api/user/${user.user_id}/sales`);
+        if (!salesContainer) {
+            // nothing to show
+        } else if (!sales || sales.length === 0) {
+            salesContainer.innerHTML = '<p>Henüz tamamlanan bir satışın yok.</p>';
+        } else {
+            const salePieces = sales.map(s => {
+                const book = s.title || '—';
+                const date = s.process_date ? new Date(s.process_date).toLocaleDateString() : '';
+                const status = s.status || '';
+                const buyerId = s.buyer_user_id || s.buyer_id || '';
+                const buyerName = s.buyer_name || s.buyer || '';
+
+                const action = (status === 'Tamamlandı' || status === 'Onaylandı' || (s.listing_status && s.listing_status === 'İşlemde'))
+                    ? `<a class="btn" href="leave-review.html?offer=${s.offer_id}&listing=${s.listing_id}&book_def=${s.book_def_id}&seller=${buyerId}">Alıcıyı Değerlendir</a>`
+                    : '';
+
+                return `
+                    <div class="process-card">
+                        <b>${book}</b><br>
+                        Alıcı: ${ buyerId ? `<a href="profile.html?user=${buyerId}">${buyerName || buyerId}</a>` : (buyerName || '—') }<br>
+                        Durum: <span class="status-badge">${status}</span><br>
+                        Tarih: ${date}<br>
+                        ${action}
+                    </div>
+                `;
+            }).join('');
+            salesContainer.innerHTML = salePieces;
+        }
+    } catch (e) {
+        console.error('Error loading sales for seller:', e);
     }
 }
-
 async function handleLogin(e) {
     e.preventDefault();
     const email = document.getElementById('email').value;
@@ -563,25 +644,47 @@ async function setupOfferPage(user) {
 
 async function setupLeaveReviewPage(user) {
     if (!user) return window.location.href = 'login.html';
-    // Read params passed from my-orders: offer, listing, book_def, seller
+    // Read params passed from my-orders/ sales: offer, listing, book_def, seller (or target_user_id)
     const params = new URLSearchParams(window.location.search);
     const offerId = params.get('offer');
     const listingId = params.get('listing');
     const bookDefId = params.get('book_def');
-    let sellerId = params.get('seller');
+    let targetUserId = params.get('target_user_id') || params.get('seller') || params.get('target');
 
-    // Prefill title and seller display
+    // Prefill title and target display name
     let title = null;
-    let sellerName = null;
+    let targetName = null;
+
+    // Get title from listing or offer or book_def
     if (listingId) {
         const listing = await apiFetch(`/api/listings/${listingId}`);
-        if (listing) { title = listing.title; sellerName = listing.user_name; sellerId = listing.owner_user_id || sellerId; }
+        if (listing) {
+            title = listing.title;
+            // If no explicit target passed, default target to listing owner
+            if (!targetUserId) targetUserId = listing.owner_user_id;
+            // don't set targetName here; we'll prefer fetching user info below when possible
+        }
     } else if (offerId) {
         const offer = await apiFetch(`/api/offers/${offerId}`);
-        if (offer) { title = offer.title; sellerName = offer.requester_name; sellerId = offer.requester_id || sellerId; }
+        if (offer) {
+            title = offer.title;
+            if (!targetUserId) targetUserId = offer.requester_id; // default to requester if no explicit target
+        }
     } else if (bookDefId) {
         const cat = await apiFetch(`/api/catalog?book_def_id=${bookDefId}`);
         if (Array.isArray(cat) && cat.length) title = cat[0].title;
+    }
+
+    // If we have a targetUserId, fetch the user's display name
+    if (targetUserId) {
+        try {
+            const userInfo = await apiFetch(`/api/user/${targetUserId}`);
+            if (userInfo && userInfo.user) {
+                targetName = userInfo.user.user_name || `${userInfo.user.name || ''} ${userInfo.user.surname || ''}`.trim();
+            } else if (userInfo && userInfo.user_name) {
+                targetName = userInfo.user_name;
+            }
+        } catch (e) { console.warn('Could not fetch target user info', e); }
     }
 
     if (title) {
@@ -589,27 +692,36 @@ async function setupLeaveReviewPage(user) {
         const h3 = document.querySelector('.item h3');
         if (h3) h3.innerText = title;
     }
-    if (sellerName) {
+    if (targetName) {
         const p = document.querySelector('.item p b');
         if (p) {
-            if (sellerId) p.parentElement.innerHTML = `<b><a href="profile.html?user=${sellerId}">${sellerName}</a></b>`;
-            else p.innerText = sellerName;
+            if (targetUserId) p.parentElement.innerHTML = `<b><a href="profile.html?user=${targetUserId}">${targetName}</a></b>`;
+            else p.innerText = targetName;
         }
     }
 
-    // If user already left a review for this listing/book, prefill form (we overwrite previous)
+    // Fill hidden inputs if present
+    const hidOrder = document.getElementById('review-order-id');
+    const hidListing = document.getElementById('review-listing-id');
+    const hidBook = document.getElementById('review-bookdef-id');
+    const hidTarget = document.getElementById('review-target-user-id');
+    if (hidOrder) hidOrder.value = offerId || '';
+    if (hidListing) hidListing.value = listingId || '';
+    if (hidBook) hidBook.value = bookDefId || '';
+    if (hidTarget) hidTarget.value = targetUserId || '';
+
+    // If user already left a review for this (by same reviewer -> same listing/book and same target), prefill
     try {
         let existingReview = null;
-        if (listingId) {
+        if (listingId && targetUserId) {
             const reviews = await apiFetch(`/api/reviews?listing_id=${listingId}`);
-            if (Array.isArray(reviews)) existingReview = reviews.find(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id));
+            if (Array.isArray(reviews)) existingReview = reviews.find(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id) && parseInt(r.degerlendirilen_kullanici_id) === parseInt(targetUserId));
         }
-        if (!existingReview && bookDefId) {
+        if (!existingReview && bookDefId && targetUserId) {
             const reviews = await apiFetch(`/api/reviews?book_def_id=${bookDefId}`);
-            if (Array.isArray(reviews)) existingReview = reviews.find(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id) && !r.listing_id);
+            if (Array.isArray(reviews)) existingReview = reviews.find(r => parseInt(r.degerlendiren_kullanici_id) === parseInt(user.user_id) && parseInt(r.degerlendirilen_kullanici_id) === parseInt(targetUserId) && !r.listing_id);
         }
         if (existingReview) {
-            // Prefill point and comment
             const star = document.querySelector(`input[name="rating"][value="${existingReview.point}"]`);
             if (star) star.checked = true;
             document.getElementById('reviewText').value = existingReview.comment || '';
@@ -628,7 +740,7 @@ async function setupLeaveReviewPage(user) {
             book_def_id: bookDefId || null,
             listing_id: listingId || null,
             degerlendiren_kullanici_id: user.user_id,
-            degerlendirilen_kullanici_id: sellerId || null,
+            degerlendirilen_kullanici_id: targetUserId || null,
             point: point,
             comment: comment
         };
