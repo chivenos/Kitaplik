@@ -13,9 +13,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const pool = mysql.createPool({
     host: 'localhost',
-    port: 3006,
+    port: 3306,
     user: 'root',
-    password: 'Bou0tmF5!',
+    password: 'olanzap1n',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,

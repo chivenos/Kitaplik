@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <title>Kitap Platformu</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
 <nav>
-    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="index.html" style="text-decoration:none; color:#fff; font-size: 1.2rem;">
+            <i class="fas fa-book-open"></i> Kitap Platformu
+        </a>
+    </div>
     <div>
         <a href="index.html">Ana Sayfa</a>
         <a href="catalog.html">Katalog</a>
@@ -18,29 +23,47 @@
     </div>
 </nav>
 
-<h1>Kitap Al / Sat / Kirala</h1>
+<h1 style="text-align: center; margin-top: 40px; color: #2d6a4f;">
+    Kitap Al / Sat / Kirala
+</h1>
+
+<div class="box" style="text-align: center;">
+    <a class="btn btn-primary" style="width: auto; margin: 0 10px;" href="catalog.html">
+        <i class="fas fa-search"></i> Kataloğa Git
+    </a>
+    <a class="btn btn-primary" style="width: auto; margin: 0 10px;" href="listings.html">
+        <i class="fas fa-list"></i> İlanlara Bak
+    </a>
+    <a class="btn" style="background-color: #e76f51; width: auto; margin: 0 10px;" href="add-listing.html">
+        <i class="fas fa-plus"></i> İlan Ekle
+    </a>
+</div>
 
 <div class="box">
-    <a class="btn" href="catalog.html">Kataloğa Git</a>
-    &nbsp;
-    <a class="btn" href="listings.html">İlanlara Bak</a>
-    &nbsp;
-    <a class="btn" href="add-listing.html">İlan Ekle</a>
-</div>
+    <h2 style="border-bottom: 2px solid #e9ecef; padding-bottom: 15px; margin-bottom: 25px; font-size: 1.4rem;">
+        Popüler Kitaplar 📖
+    </h2>
 
-<h2>Popüler Kitaplar</h2>
-
-<div class="item list-row">
-    <img src="img/book1.jpg">
-    <div>
-        <a href="book.html"><b>İnce Memed</b></a> – Yaşar Kemal
+    <div class="list-row" style="border: 1px solid #eee;"> 
+        <img src="img/book1.jpg">
+        <div style="padding-top: 10px;">
+            <a href="book.html" style="font-size: 1.1em;"><b>İnce Memed</b></a>
+            <br>
+            <span style="color: #666; font-size: 0.9em;">Yaşar Kemal</span>
+        </div>
     </div>
-</div>
 
-<div class="item list-row">
-    <img src="img/book2.jpg">
-    <div>
-        <a href="book.html"><b>Zamanın Kısa Tarihi</b></a> – Stephen Hawking
+    <div class="list-row" style="border: 1px solid #eee;">
+        <img src="img/book2.jpg" alt="Zamanın Kısa Tarihi">
+        <div style="padding-top: 10px;">
+            <a href="book.html" style="font-size: 1.1em;"><b>Zamanın Kısa Tarihi</b></a>
+            <br>
+            <span style="color: #666; font-size: 0.9em;">Stephen Hawking</span>
+        </div>
+    </div>
+    
+    <div style="text-align: right; margin-top: 15px;">
+        <a href="catalog.html" style="font-size: 0.9em;">Tümünü Gör &rarr;</a>
     </div>
 </div>
 

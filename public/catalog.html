@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <title>Katalog</title>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
 
 <nav>
-    <div><a href="index.html" style="text-decoration:none; color:#333;">Kitap Platformu</a></div>
+    <div>
+        <a href="index.html" style="text-decoration:none; color:#fff; font-size: 1.2rem;">
+            <i class="fas fa-book-open"></i> Kitap Platformu
+        </a>
+    </div>
     <div id="nav-links">
         <a href="index.html">Ana Sayfa</a>
         <a href="catalog.html">Katalog</a>
@@ -17,21 +22,26 @@
     </div>
 </nav>
 
-<h1>Katalog</h1>
+<div style="max-width: 1100px; margin: 40px auto; padding: 0 20px;">
 
-<div style="display:flex; gap:30px;">
-    <div class="filter-box">
-        <h2>Filtreler</h2>
-        <div class="filter-group">
-            <label>Kitap Adı</label>
-            <input type="text" id="searchTitle" placeholder="Kitap ara...">
+    <h1 style="color: #2d6a4f; margin-bottom: 30px;">Katalog</h1>
+
+    <div style="display:flex; gap:30px; align-items: flex-start;">
+        
+        <div class="filter-box" style="position: sticky; top: 20px;">
+            <h2 style="margin-top:0; font-size: 1.3rem;">Filtreler</h2>
+            <div class="filter-group">
+                <label>Kitap Adı</label>
+                <input type="text" id="searchTitle" placeholder="Kitap ara...">
+            </div>
+            <button class="btn btn-primary" style="width: 100%;" onclick="loadCatalog()">Ara</button>
         </div>
-        <button class="btn" onclick="loadCatalog()">Ara</button>
+
+        <div style="flex: 1;" id="catalog-container">
+            <p>Kitaplar yükleniyor...</p>
+        </div>
     </div>
 
-    <div style="width:100%;" id="catalog-container">
-        <p>Kitaplar yükleniyor...</p>
-    </div>
 </div>
 
 <script src="js/app.js"></script>
