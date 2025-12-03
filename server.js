@@ -15,7 +15,7 @@ const pool = mysql.createPool({
     host: 'localhost',
     port: 3306,
     user: 'root',
-    password: 'kakamgeldi3169',
+    password: 'Allah123!',
     database: 'kitaplik_deneme_db',
     waitForConnections: true,
     connectionLimit: 10,
@@ -24,7 +24,7 @@ const pool = mysql.createPool({
 
 (async () => {
     try {
-        const connection = await pool.getConnection();  
+        const connection = await pool.getConnection();
         console.log('MySQL Veritabanına Başarıyla Bağlandı!');
         connection.release();
     } catch (err) {
@@ -402,12 +402,32 @@ app.get('/api/user/:id/orders', async (req, res) => {
             ORDER BY o.offer_date DESC
         `;
         const [results] = await pool.query(sql, [req.params.id]);
-        res.json(results);
+            // Her satıra role: 'buyer' ekle
+            const withRole = results.map(r => ({...r, role: 'buyer'}));
+            res.json(withRole);
     } catch (err) {
         res.status(500).json(err);
     }
 });
-
+    // Satıcıya ait satışlar (my-orders için)
+    app.get('/api/user/:id/sales', async (req, res) => {
+        try {
+            const userId = req.params.id;
+            const sql = `
+                SELECT o.offer_id, l.listing_id, bd.book_def_id, bd.title, o.status, o.offer_date as process_date, o.price, u.user_name as buyer_name, u.user_id as buyer_user_id
+                FROM offers o
+                JOIN listings l ON o.listing_id = l.listing_id
+                JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
+                JOIN users u ON o.requester_id = u.user_id
+                WHERE l.owner_user_id = ? AND o.status = 'Onaylandı' AND o.offer_type LIKE '%sat%'
+                ORDER BY o.offer_date DESC
+            `;
+            const [results] = await pool.query(sql, [userId]);
+            res.json(results);
+        } catch (err) {
+            res.status(500).json(err);
+        }
+    });
 
 app.post('/api/books', async (req, res) => { // book definitions
     try {
@@ -566,7 +586,9 @@ app.get('/api/user/:id/reviews', async (req, res) => { // bir kişinin aldığı
             ORDER BY r.comment_date DESC
         `;
         const [results] = await pool.query(sql, [userId]);
-        res.json(results);
+        // Her satıra role: 'seller' ekle
+        const withRole = results.map(r => ({...r, role: 'seller'}));
+        res.json(withRole);
     } catch (err) {
         res.status(500).json(err);
     }

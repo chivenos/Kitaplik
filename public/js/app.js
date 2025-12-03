@@ -482,9 +482,8 @@ async function loadMyOrders(user) {
                 const buyerId = s.buyer_user_id || s.buyer_id || '';
                 const buyerName = s.buyer_name || s.buyer || '';
 
-                // Hide review button for rejected transactions
-                const isRejected = status === 'Reddedildi';
-                const action = (!isRejected && (status === 'Tamamlandı' || status === 'Onaylandı' || (s.listing_status && s.listing_status === 'İşlemde')))
+                // Sadece 'Onaylandı' statüsünde göster
+                const action = (status === 'Onaylandı')
                     ? `<a class="btn" href="leave-review.html?offer=${s.offer_id}&listing=${s.listing_id}&book_def=${s.book_def_id}&seller=${buyerId}">Alıcıyı Değerlendir</a>`
                     : '';
 
