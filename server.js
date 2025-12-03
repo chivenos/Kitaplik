@@ -394,17 +394,22 @@ app.put('/api/user/:id', async (req, res) => {
 app.get('/api/user/:id/orders', async (req, res) => { 
     try {
         const sql = `
-            SELECT o.offer_id, l.listing_id, bd.book_def_id, l.owner_user_id as seller_user_id, bd.title, o.status, o.offer_date as process_date, o.price
+            SELECT o.offer_id, l.listing_id, bd.book_def_id, l.owner_user_id AS seller_user_id, bd.title AS book_title,o.status, o.offer_date AS process_date, o.price
             FROM offers o
             JOIN listings l ON o.listing_id = l.listing_id
             JOIN book_definitions bd ON l.book_def_id = bd.book_def_id
             WHERE o.requester_id = ?
             ORDER BY o.offer_date DESC
         `;
+
         const [results] = await pool.query(sql, [req.params.id]);
-            // Her satıra role: 'buyer' ekle
-            const withRole = results.map(r => ({...r, role: 'buyer'}));
-            res.json(withRole);
+
+        const withRole = results.map(r => ({
+            ...r,
+            role: "buyer"
+        }));
+
+        res.json(withRole);
     } catch (err) {
         res.status(500).json(err);
     }
