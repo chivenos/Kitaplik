@@ -468,6 +468,26 @@ async function handleRegister(e) {
 
 async function setupOfferPage(user) { 
     if (!user) { alert('Giriş yapmalısın!'); window.location.href = 'login.html'; return; }
+
+    const offerTypeSelect = document.getElementById('offerType');
+    const durationWrapper = document.getElementById('rental-duration-wrapper');
+    const durationInput = document.getElementById('lendingDuration');
+
+    function toggleDurationField() {
+    const val = offerTypeSelect.value;
+    
+    if (val === 'Kiralama' || val === 'Ödünç') {
+        durationWrapper.style.display = 'block';
+    } else {
+        durationWrapper.style.display = 'none';
+        durationInput.value = ''; 
+    }
+    }
+
+    offerTypeSelect.addEventListener('change', toggleDurationField);
+    
+    toggleDurationField();
+
     const params = new URLSearchParams(window.location.search);
     const listingId = params.get('listing');
     const listing = await apiFetch(`/api/listings/${listingId}`);

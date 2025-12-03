@@ -48,8 +48,10 @@
                 <option value="Ortak Nokta">Ortak Nokta</option>
             </select>
             
-            <label>Kiralama Süresi (Sadece kiralama ise)</label>
-            <input type="number" id="lendingDuration" placeholder="Gün sayısı (Opsiyonel)">
+            <div id="rental-duration-wrapper" style="display: none;">
+                <label>Kiralama Süresi (Gün)</label>
+                <input type="number" id="lendingDuration" placeholder="Gün sayısı">
+            </div>
 
             <button id="submitOfferBtn" class="btn-primary" type="button">Teklifi Gönder</button>
         </form>
